@@ -26,6 +26,9 @@
     <!-- Font Inter & Phosphor Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Firebase SDKs (Compat / Modular via CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -236,60 +239,29 @@
     </div>
 
     <script>
-        const feedInicial = [
-            {
-                id: 'FEED-1',
-                autor: 'Mariana Costa',
-                cliente: 'Supermercado Central',
-                plataforma: 'Android',
-                modulo: 'Módulo: Vendas',
-                tipo: 'Bug',
-                ticketRef: '',
-                descricao: 'Ao tentar emitir NFC-e com cupom desconto, o aplicativo fecha sozinho na tela de pagamento.',
-                anexo: null,
-                anexoNome: null,
-                data: '11:30',
-                abrirTicket: false,
-                comentarios: [
-                    { autor: 'Carlos Lima', cliente: 'Posto Estrela', texto: 'Aqui também aconteceu a mesma coisa.' }
-                ]
-            },
-            {
-                id: 'FEED-2',
-                autor: 'Lucas Ribeiro',
-                cliente: 'Distribuidora Alfa',
-                plataforma: 'iOS',
-                modulo: 'Módulo: Financeiro',
-                tipo: 'Validado',
-                ticketRef: '#TICKET-9923',
-                descricao: 'Fluxo completo de recebimento via PIX validado sem nenhuma lentidão ou divergência.',
-                anexo: null,
-                anexoNome: null,
-                data: '11:15',
-                abrirTicket: false,
-                comentarios: []
-            }
-        ];
+        // CONFIGURAÇÃO DO FIREBASE (Com as suas credenciais inseridas)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB7wj9Sq2LdHLZy7T0tOG-Lt2RVaUuolWQ",
+            authDomain: "teste-versao-fechada.firebaseapp.com",
+            projectId: "teste-versao-fechada",
+            storageBucket: "teste-versao-fechada.firebasestorage.app",
+            messagingSenderId: "10617609545",
+            appId: "1:10617609545:web:0052a9d6159678d4ea4e98",
+            measurementId: "G-FJ2BZVKGNS"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         let appState = {
-            feed: JSON.parse(localStorage.getItem('tvf_feed_v3')) || feedInicial,
+            feed: [],
             anexoAtualBase64: null,
             anexoAtualNome: null
         };
 
-        function salvarEstado() {
-            localStorage.setItem('tvf_feed_v3', JSON.stringify(appState.feed));
-        }
-
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'tvf_feed_v3') {
-                appState.feed = JSON.parse(localStorage.getItem('tvf_feed_v3')) || feedInicial;
-                renderizarFeed();
-            }
-        });
-
         document.addEventListener('DOMContentLoaded', () => {
-            renderizarFeed();
+            ouvirMudancasTempoReal();
 
             window.addEventListener('paste', (e) => {
                 const items = e.clipboardData.items;
@@ -312,6 +284,36 @@
                 }
             });
         });
+
+        // Sincronização e escuta em tempo real nativa do Firestore
+        function ouvirMudancasTempoReal() {
+            db.collection('ocorrencias')
+                .orderBy('timestamp', 'desc')
+                .onSnapshot((snapshot) => {
+                    appState.feed = [];
+                    snapshot.forEach((doc) => {
+                        const item = doc.data();
+                        appState.feed.push({
+                            id: doc.id,
+                            autor: item.autor,
+                            cliente: item.cliente,
+                            plataforma: item.plataforma,
+                            modulo: item.modulo,
+                            tipo: item.tipo,
+                            ticketRef: item.ticketRef || '',
+                            descricao: item.descricao,
+                            anexo: item.anexo,
+                            anexoNome: item.anexoNome,
+                            data: item.data,
+                            abrirTicket: item.abrirTicket,
+                            comentarios: item.comentarios || []
+                        });
+                    });
+                    renderizarFeed();
+                }, (error) => {
+                    console.error("Erro ao ouvir dados do Firestore: ", error);
+                });
+        }
 
         function verificarStatusCondicional() {
             const tipo = document.getElementById('report-tipo').value;
@@ -427,7 +429,7 @@
                                 <i class="ph-bold ph-hand-fist text-xs"></i>
                                 <span>Reportar problema</span>
                             </button>
-                            <button onclick="toggleAbrirTicket('${item.id}')" class="flex items-center space-x-1 px-3 py-1.5 ${item.abrirTicket ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300'} rounded-xl font-semibold transition">
+                            <button onclick="toggleAbrirTicket('${item.id}', ${item.abrirTicket})" class="flex items-center space-x-1 px-3 py-1.5 ${item.abrirTicket ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300'} rounded-xl font-semibold transition">
                                 <i class="ph-bold ph-ticket text-xs"></i>
                                 <span>${item.abrirTicket ? 'Ticket Marcado' : 'Abrir ticket'}</span>
                             </button>
@@ -507,7 +509,7 @@
             document.getElementById('conteudo-anexo-modal').innerHTML = '';
         }
 
-        function salvarReport(e) {
+        async function salvarReport(e) {
             e.preventDefault();
             const autor = document.getElementById('report-autor').value;
             const cliente = document.getElementById('report-cliente').value;
@@ -518,7 +520,6 @@
             const descricao = document.getElementById('report-descricao').value;
 
             const novoItem = {
-                id: 'FEED-' + Date.now(),
                 autor,
                 cliente,
                 plataforma,
@@ -530,13 +531,17 @@
                 anexoNome: appState.anexoAtualNome,
                 data: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                 abrirTicket: false,
-                comentarios: []
+                comentarios: [],
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            appState.feed.unshift(novoItem);
-            salvarEstado();
-            renderizarFeed();
-            fecharModalReport();
+            try {
+                await db.collection('ocorrencias').add(novoItem);
+                fecharModalReport();
+            } catch (error) {
+                alert('Erro ao salvar no Firestore.');
+                console.error(error);
+            }
         }
 
         function abrirModalReportarProblema(cardId) {
@@ -551,7 +556,7 @@
             document.getElementById('form-reportar-problema').reset();
         }
 
-        function salvarReportarProblema(e) {
+        async function salvarReportarProblema(e) {
             e.preventDefault();
             const cardId = document.getElementById('reportar-problema-card-id').value;
             const autor = document.getElementById('reportar-problema-autor').value;
@@ -560,27 +565,32 @@
 
             const item = appState.feed.find(f => f.id === cardId);
             if (item) {
-                item.comentarios.push({ autor, cliente, texto });
-                salvarEstado();
-                renderizarFeed();
-                fecharModalReportarProblema();
+                const novosComentarios = [...item.comentarios, { autor, cliente, texto }];
+                try {
+                    await db.collection('ocorrencias').doc(cardId).update({ comentarios: novosComentarios });
+                    fecharModalReportarProblema();
+                } catch (error) {
+                    alert('Erro ao adicionar comentário.');
+                    console.error(error);
+                }
             }
         }
 
-        function toggleAbrirTicket(cardId) {
-            const item = appState.feed.find(f => f.id === cardId);
-            if (item) {
-                item.abrirTicket = !item.abrirTicket;
-                salvarEstado();
-                renderizarFeed();
+        async function toggleAbrirTicket(cardId, statusAtual) {
+            try {
+                await db.collection('ocorrencias').doc(cardId).update({ abrirTicket: !statusAtual });
+            } catch (error) {
+                console.error('Erro ao atualizar ticket:', error);
             }
         }
 
-        function deletarOcorrencia(cardId) {
+        async function deletarOcorrencia(cardId) {
             if (confirm('Deseja realmente remover esta ocorrência como indevida?')) {
-                appState.feed = appState.feed.filter(f => f.id !== cardId);
-                salvarEstado();
-                renderizarFeed();
+                try {
+                    await db.collection('ocorrencias').doc(cardId).delete();
+                } catch (error) {
+                    console.error('Erro ao deletar ocorrência:', error);
+                }
             }
         }
 
