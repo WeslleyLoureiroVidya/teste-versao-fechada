@@ -362,47 +362,57 @@
             }
         ];
 
+        function lerLocal(chave, padrao) {
+            try { return JSON.parse(localStorage.getItem(chave)) || padrao; }
+            catch (e) { return padrao; }
+        }
+
+        function esc(valor) {
+            return String(valor ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+
         let appState = {
             feed: JSON.parse(localStorage.getItem('tvf_feed_v3')) || feedInicial,
-            checklistChecks: JSON.parse(localStorage.getItem('tvf_checklist_checks_v1')) || {},
-            checklistProblemas: JSON.parse(localStorage.getItem('tvf_checklist_prob_v1')) || {},
-            checklistEstrutura: JSON.parse(localStorage.getItem('tvf_checklist_est_v1')) || checklistModelo,
+            // ---- DADOS LOCAIS (só deste navegador/dispositivo) ----
+            checklistChecks: lerLocal('tvf_checklist_checks_v1', {}),
+            checklistProblemas: lerLocal('tvf_checklist_prob_v1', {}),   // { tarefaId: idDaOcorrencia }
+            checklistAbertos: lerLocal('tvf_checklist_open_v1', {}),     // { categoriaId: true/false }
+            checklistEstrutura: checklistModelo,                         // sempre vem do código
             anexoAtualBase64: null,
             anexoAtualNome: null,
             tarefaSelecionadaParaReport: null
         };
 
-        function salvarEstado() {
-            localStorage.setItem('tvf_feed_v3', JSON.stringify(appState.feed));
+        // FEED: único dado compartilhado (tempo real)
+        function salvarFeed() {
+            try {
+                localStorage.setItem('tvf_feed_v3', JSON.stringify(appState.feed));
+                return true;
+            } catch (e) {
+                alert('Não foi possível salvar: o anexo é grande demais. Tente um print menor ou sem anexo.');
+                return false;
+            }
+        }
+
+        // CHECKLIST: dados locais, nunca sincronizados com ninguém
+        function salvarChecklistLocal() {
             localStorage.setItem('tvf_checklist_checks_v1', JSON.stringify(appState.checklistChecks));
             localStorage.setItem('tvf_checklist_prob_v1', JSON.stringify(appState.checklistProblemas));
-            localStorage.setItem('tvf_checklist_est_v1', JSON.stringify(appState.checklistEstrutura));
-
-            // Dispara evento global para atualizar a própria aba instantaneamente em tempo real
-            window.dispatchEvent(new Event('tvf_atualizar_dados'));
+            localStorage.setItem('tvf_checklist_open_v1', JSON.stringify(appState.checklistAbertos));
         }
 
-        // Escuta atualizações de outras abas ou da própria aba
+        // Só o FEED reage a mudanças vindas de outras abas. O checklist é ignorado de propósito.
         window.addEventListener('storage', (e) => {
-            sincronizarDadosLocais();
+            if (e.key === 'tvf_feed_v3' || e.key === null) {
+                appState.feed = lerLocal('tvf_feed_v3', feedInicial);
+                renderizarFeed();
+                renderizarChecklist(); // atualiza o aviso "ocorrência relatada" se ela foi excluída
+            }
         });
-
-        window.addEventListener('tvf_atualizar_dados', () => {
-            sincronizarDadosLocais();
-        });
-
-        function sincronizarDadosLocais() {
-            appState.feed = JSON.parse(localStorage.getItem('tvf_feed_v3')) || feedInicial;
-            appState.checklistChecks = JSON.parse(localStorage.getItem('tvf_checklist_checks_v1')) || {};
-            appState.checklistProblemas = JSON.parse(localStorage.getItem('tvf_checklist_prob_v1')) || {};
-            appState.checklistEstrutura = JSON.parse(localStorage.getItem('tvf_checklist_est_v1')) || checklistModelo;
-            
-            renderizarFeed();
-            renderizarChecklist();
-        }
 
         document.addEventListener('DOMContentLoaded', () => {
-            sincronizarDadosLocais();
+            renderizarFeed();
+            renderizarChecklist();
 
             window.addEventListener('paste', (e) => {
                 const items = e.clipboardData.items;
@@ -483,7 +493,7 @@
                 else if (item.tipo === 'Validado') badgeTipo = '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">Validado</span>';
                 else badgeTipo = '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">Dúvida</span>';
 
-                let ticketRefHtml = item.ticketRef ? `<div class="mt-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center space-x-1"><i class="ph-bold ph-ticket"></i><span>Ticket de referência: ${item.ticketRef}</span></div>` : '';
+                let ticketRefHtml = item.ticketRef ? `<div class="mt-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center space-x-1"><i class="ph-bold ph-ticket"></i><span>Ticket de referência: ${esc(item.ticketRef)}</span></div>` : '';
 
                 let comentariosHtml = '';
                 if (item.comentarios && item.comentarios.length > 0) {
@@ -493,11 +503,11 @@
                         comentariosHtml += `
                             <div class="text-xs space-y-0.5">
                                 <div class="flex items-center space-x-2">
-                                    <span class="font-semibold text-slate-700 dark:text-slate-300">${c.autor}</span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">${esc(c.autor)}</span>
                                     <span class="text-slate-400">•</span>
-                                    <span class="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 font-medium">${c.cliente}</span>
+                                    <span class="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 font-medium">${esc(c.cliente)}</span>
                                 </div>
-                                ${c.texto ? `<p class="text-slate-600 dark:text-slate-300 pl-1">${c.texto}</p>` : ''}
+                                ${c.texto ? `<p class="text-slate-600 dark:text-slate-300 pl-1">${esc(c.texto)}</p>` : ''}
                             </div>
                         `;
                     });
@@ -519,9 +529,9 @@
                         <div class="mt-3 pt-2 flex items-center space-x-2">
                             <button onclick="abrirVisualizacaoAnexo('${safeData}', '${safeName}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition">
                                 <i class="ph-bold ph-eye text-emerald-600"></i>
-                                <span>Ver Anexo (${item.anexoNome || 'Arquivo'})</span>
+                                <span>Ver Anexo (${esc(item.anexoNome || 'Arquivo')})</span>
                             </button>
-                            <a href="${item.anexo}" download="${item.anexoNome || 'evidencia'}" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition">
+                            <a href="${item.anexo}" download="${esc(item.anexoNome || 'evidencia')}" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition">
                                 <i class="ph-bold ph-download text-emerald-600"></i>
                                 <span>Baixar</span>
                             </a>
@@ -534,8 +544,8 @@
                 card.innerHTML = `
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2">
-                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">${item.cliente}</span>
-                            <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-medium">${item.plataforma} • ${item.modulo}</span>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">${esc(item.cliente)}</span>
+                            <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-medium">${esc(item.plataforma)} • ${esc(item.modulo)}</span>
                         </div>
                         <div class="flex items-center space-x-2">
                             ${badgeAbrirTicket}
@@ -543,16 +553,16 @@
                         </div>
                     </div>
 
-                    <p class="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">${item.descricao}</p>
+                    <p class="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">${esc(item.descricao)}</p>
                     ${ticketRefHtml}
                     ${anexoHtml}
                     ${comentariosHtml}
 
                     <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400">
                         <div class="flex items-center space-x-1.5">
-                            <div class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-[10px]">${item.autor.charAt(0)}</div>
-                            <span class="font-medium text-slate-600 dark:text-slate-300">${item.autor}</span>
-                            <span>• ${item.data}</span>
+                            <div class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-[10px]">${esc(item.autor.charAt(0))}</div>
+                            <span class="font-medium text-slate-600 dark:text-slate-300">${esc(item.autor)}</span>
+                            <span>• ${esc(item.data)}</span>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
                             <button onclick="abrirModalReportarProblema('${item.id}')" class="flex items-center space-x-1 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 text-amber-700 dark:text-amber-300 rounded-xl font-semibold transition border border-amber-200 dark:border-amber-800">
@@ -574,6 +584,7 @@
             });
         }
 
+        // Lógica do Checklist
         function renderizarChecklist() {
             const container = document.getElementById('lista-checklist');
             const containerProgresso = document.getElementById('checklist-progresso-container');
@@ -597,6 +608,7 @@
                     });
                 });
 
+                const catAberta = (cat.id in appState.checklistAbertos) ? appState.checklistAbertos[cat.id] : !!cat.aberto;
                 const catDiv = document.createElement('div');
                 catDiv.className = 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm';
 
@@ -605,8 +617,10 @@
                     let tarefasHtml = '';
                     sub.tarefas.forEach(t => {
                         const isChecked = !!appState.checklistChecks[t.id];
-                        const hasProblem = !!appState.checklistProblemas[t.id];
+                        const idOcorrencia = appState.checklistProblemas[t.id];
+                        const hasProblem = !!idOcorrencia && appState.feed.some(f => f.id === idOcorrencia);
 
+                        // Estilização condicional se a tarefa teve problema relatado
                         let boxClass = "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border transition";
                         if (hasProblem) {
                             boxClass += " bg-rose-50/70 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800";
@@ -626,7 +640,7 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-2 self-end sm:self-auto">
-                                    <button onclick="iniciarRelatoOcorrênciaChecklist('${t.id}', '${cat.titulo} > ${sub.titulo}')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-semibold flex items-center space-x-1 transition border border-rose-200 dark:border-rose-800">
+                                    <button onclick="iniciarRelatoOcorrenciaChecklist('${t.id}', '${esc(cat.titulo + ' > ' + sub.titulo)}')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-semibold flex items-center space-x-1 transition border border-rose-200 dark:border-rose-800">
                                         <i class="ph-bold ph-bug text-xs"></i>
                                         <span>Relatar ocorrência</span>
                                     </button>
@@ -657,10 +671,10 @@
                             </div>
                         </div>
                         <div class="flex items-center space-x-2 text-slate-400">
-                            <i class="ph-bold ${cat.aberto ? 'ph-caret-up' : 'ph-caret-down'} text-lg"></i>
+                            <i class="ph-bold ${catAberta ? 'ph-caret-up' : 'ph-caret-down'} text-lg"></i>
                         </div>
                     </div>
-                    <div class="${cat.aberto ? 'block' : 'hidden'} p-4 pt-0 space-y-4">
+                    <div class="${catAberta ? 'block' : 'hidden'} p-4 pt-0 space-y-4">
                         ${subHtml}
                     </div>
                 `;
@@ -681,25 +695,32 @@
         function toggleCategoriaChecklist(catId) {
             const cat = appState.checklistEstrutura.find(c => c.id === catId);
             if (cat) {
-                cat.aberto = !cat.aberto;
-                salvarEstado();
+                const atual = (catId in appState.checklistAbertos) ? appState.checklistAbertos[catId] : !!cat.aberto;
+                appState.checklistAbertos[catId] = !atual;
+                salvarChecklistLocal();
+                renderizarChecklist();
             }
         }
 
+        // Marcar/desmarcar: SOMENTE local, não toca no feed
         function toggleCheckTarefa(tarefaId) {
             appState.checklistChecks[tarefaId] = !appState.checklistChecks[tarefaId];
-            salvarEstado();
+            salvarChecklistLocal();
+            renderizarChecklist();
         }
 
-        function iniciarRelatoOcorrênciaChecklist(tarefaId, moduloSugerido) {
+        // "Relatar ocorrência" dentro do checklist: abre o formulário que publica no feed em tempo real
+        function iniciarRelatoOcorrenciaChecklist(tarefaId, moduloSugerido) {
             appState.tarefaSelecionadaParaReport = tarefaId;
             abrirModalReport();
             document.getElementById('report-modulo').value = moduloSugerido;
+            // Preenche o tipo como Bug por padrão quando vem do checklist
             document.getElementById('report-tipo').value = 'Bug';
             verificarStatusCondicional();
         }
 
         function abrirModalReport() {
+            document.getElementById('report-autor').value = localStorage.getItem('tvf_nome') || '';
             document.getElementById('modal-report').classList.remove('hidden');
             document.getElementById('modal-report').classList.add('flex');
         }
@@ -791,18 +812,27 @@
                 comentarios: []
             };
 
+            // Sincroniza com o feed (sempre mais recente) antes de acrescentar
+            appState.feed = lerLocal('tvf_feed_v3', feedInicial);
+            appState.feed.unshift(novoItem);
+            if (!salvarFeed()) { appState.feed.shift(); return; }
+
+            // Se veio de uma tarefa do checklist, marca (localmente) que ela tem ocorrência relatada
             if (appState.tarefaSelecionadaParaReport) {
-                appState.checklistProblemas[appState.tarefaSelecionadaParaReport] = true;
+                appState.checklistProblemas[appState.tarefaSelecionadaParaReport] = novoItem.id;
+                salvarChecklistLocal();
             }
 
-            appState.feed.unshift(novoItem);
-            salvarEstado();
+            localStorage.setItem('tvf_nome', autor);
+            renderizarFeed();
+            renderizarChecklist();
             fecharModalReport();
             mudarAba('feed');
         }
 
         function abrirModalReportarProblema(cardId) {
             document.getElementById('reportar-problema-card-id').value = cardId;
+            document.getElementById('reportar-problema-autor').value = localStorage.getItem('tvf_nome') || '';
             document.getElementById('modal-reportar-problema').classList.remove('hidden');
             document.getElementById('modal-reportar-problema').classList.add('flex');
         }
@@ -820,26 +850,33 @@
             const cliente = document.getElementById('reportar-problema-cliente').value;
             const texto = document.getElementById('reportar-problema-comentario').value;
 
+            appState.feed = lerLocal('tvf_feed_v3', feedInicial);
             const item = appState.feed.find(f => f.id === cardId);
             if (item) {
                 item.comentarios.push({ autor, cliente, texto });
-                salvarEstado();
-                fecharModalReportarProblema();
+                salvarFeed();
+                localStorage.setItem('tvf_nome', autor);
+                renderizarFeed();
             }
+            fecharModalReportarProblema();
         }
 
         function toggleAbrirTicket(cardId) {
+            appState.feed = lerLocal('tvf_feed_v3', feedInicial);
             const item = appState.feed.find(f => f.id === cardId);
             if (item) {
                 item.abrirTicket = !item.abrirTicket;
-                salvarEstado();
+                salvarFeed();
+                renderizarFeed();
             }
         }
 
         function deletarOcorrencia(cardId) {
             if (confirm('Deseja realmente remover esta ocorrência como indevida?')) {
-                appState.feed = appState.feed.filter(f => f.id !== cardId);
-                salvarEstado();
+                appState.feed = lerLocal('tvf_feed_v3', feedInicial).filter(f => f.id !== cardId);
+                salvarFeed();
+                renderizarFeed();
+                renderizarChecklist(); // remove o aviso vermelho da tarefa, se havia
             }
         }
 
