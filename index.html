@@ -384,6 +384,10 @@
                 appState.feed = JSON.parse(localStorage.getItem('tvf_feed_v3')) || feedInicial;
                 renderizarFeed();
             }
+            if (e.key === 'tvf_checklist_prob_v1') {
+                appState.checklistProblemas = JSON.parse(localStorage.getItem('tvf_checklist_prob_v1')) || {};
+                renderizarChecklist();
+            }
         });
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -560,7 +564,6 @@
             });
         }
 
-        // Lógica do Checklist
         function renderizarChecklist() {
             const container = document.getElementById('lista-checklist');
             const containerProgresso = document.getElementById('checklist-progresso-container');
@@ -594,7 +597,6 @@
                         const isChecked = !!appState.checklistChecks[t.id];
                         const hasProblem = !!appState.checklistProblemas[t.id];
 
-                        // Estilização condicional se a tarefa teve problema relatado
                         let boxClass = "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border transition";
                         if (hasProblem) {
                             boxClass += " bg-rose-50/70 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800";
@@ -685,7 +687,6 @@
             appState.tarefaSelecionadaParaReport = tarefaId;
             abrirModalReport();
             document.getElementById('report-modulo').value = moduloSugerido;
-            // Preenche o tipo como Bug por padrão quando vem do checklist
             document.getElementById('report-tipo').value = 'Bug';
             verificarStatusCondicional();
         }
@@ -782,7 +783,6 @@
                 comentarios: []
             };
 
-            // Se veio de uma tarefa do checklist, marca ela como tendo problema relatado (vermelha)
             if (appState.tarefaSelecionadaParaReport) {
                 appState.checklistProblemas[appState.tarefaSelecionadaParaReport] = true;
             }
@@ -811,12 +811,11 @@
             e.preventDefault();
             const cardId = document.getElementById('reportar-problema-card-id').value;
             const autor = document.getElementById('reportar-problema-autor').value;
-            const cliente = document.getElementById('report-problema-cliente') ? document.getElementById('report-problema-cliente').value : document.getElementById('reportar-problema-cliente').value;
+            const cliente = document.getElementById('reportar-problema-cliente').value;
             const texto = document.getElementById('reportar-problema-comentario').value;
 
             const item = appState.feed.find(f => f.id === cardId);
             if (item) {
-                item.comentarios.prompt = true; // Mantém estrutura
                 item.comentarios.push({ autor, cliente, texto });
                 salvarEstado();
                 renderizarFeed();
