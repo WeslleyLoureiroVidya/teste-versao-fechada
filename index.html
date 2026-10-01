@@ -58,7 +58,7 @@
                     <i class="ph-bold ph-plus-circle text-base"></i>
                     <span>Nova Ocorrência</span>
                 </button>
-                <button onclick="toggleDarkMode()" class="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+                <button onclick="clicarBotaoTema()" class="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
                     <i id="theme-icon" class="ph-bold ph-moon text-lg"></i>
                 </button>
             </div>
@@ -282,6 +282,14 @@
             <div id="conteudo-anexo-modal" class="w-full flex justify-center items-center max-h-[75vh] overflow-auto">
                 <!-- Inserido dinamicamente -->
             </div>
+        </div>
+    </div>
+
+    <!-- Easter Egg Overlay -->
+    <div id="easter-egg-overlay" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center text-center space-y-4">
+            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTswEvhYXyA-TXn6yxmB0EJcKibE-3Am2DJn0LtAZ2DAb8RPeNPLyrqSBQi&s=10" class="max-w-full max-h-[75vh] rounded-2xl shadow-2xl border-4 border-emerald-500 object-contain" alt="Easter Egg">
+            <h2 class="text-white text-xl sm:text-2xl font-black tracking-wider drop-shadow-lg">NÃO NÃO NÃO NÃO NÃO NÃO NÃO!!!!</h2>
         </div>
     </div>
 
@@ -538,6 +546,47 @@
             tarefaSelecionadaParaReport: null
         };
 
+        // Variáveis do Easter Egg
+        let clicksDark = 0;
+        let timeoutDark = null;
+
+        function clicarBotaoTema() {
+            toggleDarkMode();
+            
+            clicksDark++;
+            clearTimeout(timeoutDark);
+            
+            if (clicksDark >= 10) {
+                ativarEasterEgg();
+                clicksDark = 0;
+            } else {
+                timeoutDark = setTimeout(() => {
+                    clicksDark = 0;
+                }, 1000);
+            }
+        }
+
+        function ativarEasterEgg() {
+            const overlay = document.getElementById('easter-egg-overlay');
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+        }
+
+        function fecharEasterEgg() {
+            const overlay = document.getElementById('easter-egg-overlay');
+            overlay.classList.remove('flex');
+            overlay.classList.add('hidden');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                fecharEasterEgg();
+                fecharModalReport();
+                fecharModalReportarProblema();
+                fecharModalVisualizarAnexo();
+            }
+        });
+
         function salvarChecklistLocal() {
             localStorage.setItem('tvf_checklist_checks_v2', JSON.stringify(appState.checklistChecks));
             localStorage.setItem('tvf_checklist_prob_v2', JSON.stringify(appState.checklistProblemas));
@@ -772,6 +821,20 @@
             });
         }
 
+        // Função auxiliar para quebrar a linha após o primeiro ponto
+        function formatarTextoTarefa(texto) {
+            const indexPonto = texto.indexOf('.');
+            if (indexPonto !== -1) {
+                const primeiraFrase = texto.substring(0, indexPonto + 1);
+                const resto = texto.substring(indexPonto + 1).trim();
+                if (resto) {
+                    return `<strong class="block mb-1">${primeiraFrase}</strong><span class="block text-slate-500 dark:text-slate-400 text-xs">${resto}</span>`;
+                }
+                return `<strong>${primeiraFrase}</strong>`;
+            }
+            return `<strong>${texto}</strong>`;
+        }
+
         function renderizarChecklist() {
             const container = document.getElementById('lista-checklist');
             const containerProgresso = document.getElementById('checklist-progresso-container');
@@ -805,12 +868,14 @@
                         const isChecked = !!appState.checklistChecks[t.id];
                         const hasProblem = !!appState.checklistProblemas[t.id];
 
-                        let boxClass = "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border transition";
+                        let boxClass = "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-xl border transition";
                         if (hasProblem) {
                             boxClass += " bg-rose-50/70 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800";
                         } else {
                             boxClass += " bg-slate-50/60 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800";
                         }
+
+                        const textoFormatado = formatarTextoTarefa(t.texto);
 
                         tarefasHtml += `
                             <div class="${boxClass}">
@@ -819,8 +884,8 @@
                                         ${isChecked ? '<i class="ph-bold ph-check text-xs"></i>' : ''}
                                     </button>
                                     <div class="flex flex-col">
-                                        <span class="text-sm ${isChecked ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'}">${t.texto}</span>
-                                        ${hasProblem ? '<span class="text-[11px] font-bold text-rose-600 dark:text-rose-400 mt-0.5 flex items-center space-x-1"><i class="ph-bold ph-warning"></i><span>Ocorrência relatada</span></span>' : ''}
+                                        <div class="text-sm ${isChecked ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'}">${textoFormatado}</div>
+                                        ${hasProblem ? '<span class="text-[11px] font-bold text-rose-600 dark:text-rose-400 mt-1 flex items-center space-x-1"><i class="ph-bold ph-warning"></i><span>Ocorrência relatada</span></span>' : ''}
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-2 self-end sm:self-auto flex-shrink-0">
