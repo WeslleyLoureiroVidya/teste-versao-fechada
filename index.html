@@ -84,13 +84,17 @@
         <!-- ABA 1: FEED DE OCORRÊNCIAS -->
         <div id="aba-feed" class="flex flex-col space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                <div>
+                <div class="flex items-center space-x-3">
                     <h2 class="text-base font-bold flex items-center space-x-2">
                         <i class="ph-bold ph-broadcast text-emerald-600"></i>
                         <span>Feed em tempo real</span>
                     </h2>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="limparFeedGeral()" class="px-3 py-2 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition border border-rose-200 dark:border-rose-800">
+                        <i class="ph-bold ph-trash text-sm"></i>
+                        <span>Limpar ocorrências</span>
+                    </button>
                     <select id="filtro-plataforma" onchange="renderizarFeed()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500">
                         <option value="todas">Todas Plataformas</option>
                         <option value="Android">Android</option>
@@ -376,6 +380,23 @@
                 appState.checklistProblemas = {};
                 salvarChecklistLocal();
                 renderizarChecklist();
+            }
+        }
+
+        // Função para limpar o feed de ocorrências globalmente para todos
+        async function limparFeedGeral() {
+            if (confirm('Você realmente deseja zerar o feed de ocorrência? Essa ação será aplicada para todos.')) {
+                try {
+                    const snapshot = await db.collection('ocorrencias').get();
+                    const batch = db.batch();
+                    snapshot.docs.forEach((doc) => {
+                        batch.delete(doc.ref);
+                    });
+                    await batch.commit();
+                } catch (error) {
+                    console.error('Erro ao zerar o feed:', error);
+                    alert('Erro ao apagar as ocorrências no banco de dados.');
+                }
             }
         }
 
