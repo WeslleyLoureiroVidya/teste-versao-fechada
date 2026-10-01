@@ -119,10 +119,16 @@
                         <i class="ph-bold ph-check-square text-emerald-600"></i>
                         <span>Checklist de Validação da Versão</span>
                     </h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">O seu progresso de testes é individual e salvo apenas neste dispositivo.</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">O seu progresso de testes é individual e salvo apenas neste dispositivo[cite: 2].</p>
                 </div>
-                <div id="checklist-progresso-container" class="flex items-center space-x-3">
-                    <!-- Barra de progresso dinâmica -->
+                <div class="flex items-center space-x-3">
+                    <button onclick="limparChecklist()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition">
+                        <i class="ph-bold ph-arrow-counter-clockwise text-sm"></i>
+                        <span>Limpar marcações</span>
+                    </button>
+                    <div id="checklist-progresso-container" class="flex items-center space-x-3">
+                        <!-- Barra de progresso dinâmica -->
+                    </div>
                 </div>
             </div>
 
@@ -339,7 +345,7 @@
                         id: 'sub-pdv',
                         titulo: 'Emissão e Pagamento',
                         tarefas: [
-                            { id: 't7', texto: 'Realizar uma venda utilizando forma de pagamento Mista (Dinheiro + Cartão)' },
+                            { id: 't7', texto: 'Realizar uma venda utilizando forma de pagamento mista (Dinheiro + Cartão)' },
                             { id: 't8', texto: 'Testar cancelamento de item no carrinho antes de fechar a conta' }
                         ]
                     }
@@ -361,6 +367,16 @@
             localStorage.setItem('tvf_checklist_checks_v1', JSON.stringify(appState.checklistChecks));
             localStorage.setItem('tvf_checklist_prob_v1', JSON.stringify(appState.checklistProblemas));
             localStorage.setItem('tvf_checklist_est_v1', JSON.stringify(appState.checklistEstrutura));
+        }
+
+        // Função para limpar todas as marcações do checklist
+        function limparChecklist() {
+            if (confirm('Deseja realmente limpar todas as marcações e ocorrências relatadas no seu checklist?')) {
+                appState.checklistChecks = {};
+                appState.checklistProblemas = {};
+                salvarChecklistLocal();
+                renderizarChecklist();
+            }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -408,7 +424,7 @@
             }
         }
 
-        // Sincronização em tempo real do Feed via Firestore
+        // Sincronização em tempo real do Feed via Firestore[cite: 2]
         function ouvirMudancasTempoReal() {
             db.collection('ocorrencias')
                 .orderBy('timestamp', 'desc')
