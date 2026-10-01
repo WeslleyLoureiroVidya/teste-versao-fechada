@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teste versão fechada</title>
+    <!-- Ícone de celular verde na aba do navegador (Favicon SVG embutido) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><rect width='256' height='256' fill='none'/><rect x='64' y='16' width='128' height='224' rx='24' fill='%2316a34a'/><line x1='104' y1='40' x2='152' y2='40' fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='16'/><circle cx='128' cy='204' r='12' fill='%23ffffff'/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -26,6 +28,9 @@
     <!-- Font Inter & Phosphor Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Firebase SDKs (Compat / Modular via CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -102,7 +107,7 @@
             </div>
 
             <div id="lista-feed" class="grid grid-cols-1 gap-5">
-                <!-- Preenchido dinamicamente via JavaScript -->
+                <!-- Preenchido dinamicamente via Firebase -->
             </div>
         </div>
 
@@ -114,7 +119,7 @@
                         <i class="ph-bold ph-check-square text-emerald-600"></i>
                         <span>Checklist de Validação da Versão</span>
                     </h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Seu progresso é salvo localmente neste dispositivo.</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">O seu progresso de testes é individual e salvo apenas neste dispositivo.</p>
                 </div>
                 <div id="checklist-progresso-container" class="flex items-center space-x-3">
                     <!-- Barra de progresso dinâmica -->
@@ -122,7 +127,7 @@
             </div>
 
             <div id="lista-checklist" class="space-y-4">
-                <!-- Preenchido dinamicamente via JavaScript -->
+                <!-- Preenchido dinamicamente -->
             </div>
         </div>
 
@@ -271,40 +276,20 @@
     </div>
 
     <script>
-        const feedInicial = [
-            {
-                id: 'FEED-1',
-                autor: 'Mariana Costa',
-                cliente: 'Supermercado Central',
-                plataforma: 'Android',
-                modulo: 'Módulo: Vendas',
-                tipo: 'Bug',
-                ticketRef: '',
-                descricao: 'Ao tentar emitir NFC-e com cupom desconto, o aplicativo fecha sozinho na tela de pagamento.',
-                anexo: null,
-                anexoNome: null,
-                data: '11:30',
-                abrirTicket: false,
-                comentarios: [
-                    { autor: 'Carlos Lima', cliente: 'Posto Estrela', texto: 'Aqui também aconteceu a mesma coisa.' }
-                ]
-            },
-            {
-                id: 'FEED-2',
-                autor: 'Lucas Ribeiro',
-                cliente: 'Distribuidora Alfa',
-                plataforma: 'iOS',
-                modulo: 'Módulo: Financeiro',
-                tipo: 'Validado',
-                ticketRef: '#TICKET-9923',
-                descricao: 'Fluxo completo de recebimento via PIX validado sem nenhuma lentidão ou divergência.',
-                anexo: null,
-                anexoNome: null,
-                data: '11:15',
-                abrirTicket: false,
-                comentarios: []
-            }
-        ];
+        // CONFIGURAÇÃO DO FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyB7wj9Sq2LdHLZy7T0tOG-Lt2RVaUuolWQ",
+            authDomain: "teste-versao-fechada.firebaseapp.com",
+            projectId: "teste-versao-fechada",
+            storageBucket: "teste-versao-fechada.firebasestorage.app",
+            messagingSenderId: "10617609545",
+            appId: "1:10617609545:web:0052a9d6159678d4ea4e98",
+            measurementId: "G-FJ2BZVKGNS"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
         const checklistModelo = [
             {
@@ -362,56 +347,24 @@
             }
         ];
 
-        function lerLocal(chave, padrao) {
-            try { return JSON.parse(localStorage.getItem(chave)) || padrao; }
-            catch (e) { return padrao; }
-        }
-
-        function esc(valor) {
-            return String(valor ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-        }
-
         let appState = {
-            feed: JSON.parse(localStorage.getItem('tvf_feed_v3')) || feedInicial,
-            // ---- DADOS LOCAIS (só deste navegador/dispositivo) ----
-            checklistChecks: lerLocal('tvf_checklist_checks_v1', {}),
-            checklistProblemas: lerLocal('tvf_checklist_prob_v1', {}),   // { tarefaId: idDaOcorrencia }
-            checklistAbertos: lerLocal('tvf_checklist_open_v1', {}),     // { categoriaId: true/false }
-            checklistEstrutura: checklistModelo,                         // sempre vem do código
+            feed: [],
+            checklistChecks: JSON.parse(localStorage.getItem('tvf_checklist_checks_v1')) || {},
+            checklistProblemas: JSON.parse(localStorage.getItem('tvf_checklist_prob_v1')) || {},
+            checklistEstrutura: JSON.parse(localStorage.getItem('tvf_checklist_est_v1')) || checklistModelo,
             anexoAtualBase64: null,
             anexoAtualNome: null,
             tarefaSelecionadaParaReport: null
         };
 
-        // FEED: único dado compartilhado (tempo real)
-        function salvarFeed() {
-            try {
-                localStorage.setItem('tvf_feed_v3', JSON.stringify(appState.feed));
-                return true;
-            } catch (e) {
-                alert('Não foi possível salvar: o anexo é grande demais. Tente um print menor ou sem anexo.');
-                return false;
-            }
-        }
-
-        // CHECKLIST: dados locais, nunca sincronizados com ninguém
         function salvarChecklistLocal() {
             localStorage.setItem('tvf_checklist_checks_v1', JSON.stringify(appState.checklistChecks));
             localStorage.setItem('tvf_checklist_prob_v1', JSON.stringify(appState.checklistProblemas));
-            localStorage.setItem('tvf_checklist_open_v1', JSON.stringify(appState.checklistAbertos));
+            localStorage.setItem('tvf_checklist_est_v1', JSON.stringify(appState.checklistEstrutura));
         }
 
-        // Só o FEED reage a mudanças vindas de outras abas. O checklist é ignorado de propósito.
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'tvf_feed_v3' || e.key === null) {
-                appState.feed = lerLocal('tvf_feed_v3', feedInicial);
-                renderizarFeed();
-                renderizarChecklist(); // atualiza o aviso "ocorrência relatada" se ela foi excluída
-            }
-        });
-
         document.addEventListener('DOMContentLoaded', () => {
-            renderizarFeed();
+            ouvirMudancasTempoReal();
             renderizarChecklist();
 
             window.addEventListener('paste', (e) => {
@@ -455,6 +408,36 @@
             }
         }
 
+        // Sincronização em tempo real do Feed via Firestore
+        function ouvirMudancasTempoReal() {
+            db.collection('ocorrencias')
+                .orderBy('timestamp', 'desc')
+                .onSnapshot((snapshot) => {
+                    appState.feed = [];
+                    snapshot.forEach((doc) => {
+                        const item = doc.data();
+                        appState.feed.push({
+                            id: doc.id,
+                            autor: item.autor,
+                            cliente: item.cliente,
+                            plataforma: item.plataforma,
+                            modulo: item.modulo,
+                            tipo: item.tipo,
+                            ticketRef: item.ticketRef || '',
+                            descricao: item.descricao,
+                            anexo: item.anexo,
+                            anexoNome: item.anexoNome,
+                            data: item.data,
+                            abrirTicket: item.abrirTicket,
+                            comentarios: item.comentarios || []
+                        });
+                    });
+                    renderizarFeed();
+                }, (error) => {
+                    console.error("Erro ao ouvir dados do Firestore: ", error);
+                });
+        }
+
         function verificarStatusCondicional() {
             const tipo = document.getElementById('report-tipo').value;
             const containerTicket = document.getElementById('container-ticket-ref');
@@ -493,7 +476,7 @@
                 else if (item.tipo === 'Validado') badgeTipo = '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">Validado</span>';
                 else badgeTipo = '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">Dúvida</span>';
 
-                let ticketRefHtml = item.ticketRef ? `<div class="mt-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center space-x-1"><i class="ph-bold ph-ticket"></i><span>Ticket de referência: ${esc(item.ticketRef)}</span></div>` : '';
+                let ticketRefHtml = item.ticketRef ? `<div class="mt-1 text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center space-x-1"><i class="ph-bold ph-ticket"></i><span>Ticket de referência: ${item.ticketRef}</span></div>` : '';
 
                 let comentariosHtml = '';
                 if (item.comentarios && item.comentarios.length > 0) {
@@ -503,11 +486,11 @@
                         comentariosHtml += `
                             <div class="text-xs space-y-0.5">
                                 <div class="flex items-center space-x-2">
-                                    <span class="font-semibold text-slate-700 dark:text-slate-300">${esc(c.autor)}</span>
+                                    <span class="font-semibold text-slate-700 dark:text-slate-300">${c.autor}</span>
                                     <span class="text-slate-400">•</span>
-                                    <span class="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 font-medium">${esc(c.cliente)}</span>
+                                    <span class="px-2 py-0.5 rounded bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 font-medium">${c.cliente}</span>
                                 </div>
-                                ${c.texto ? `<p class="text-slate-600 dark:text-slate-300 pl-1">${esc(c.texto)}</p>` : ''}
+                                ${c.texto ? `<p class="text-slate-600 dark:text-slate-300 pl-1">${c.texto}</p>` : ''}
                             </div>
                         `;
                     });
@@ -529,9 +512,9 @@
                         <div class="mt-3 pt-2 flex items-center space-x-2">
                             <button onclick="abrirVisualizacaoAnexo('${safeData}', '${safeName}')" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition">
                                 <i class="ph-bold ph-eye text-emerald-600"></i>
-                                <span>Ver Anexo (${esc(item.anexoNome || 'Arquivo')})</span>
+                                <span>Ver Anexo (${item.anexoNome || 'Arquivo'})</span>
                             </button>
-                            <a href="${item.anexo}" download="${esc(item.anexoNome || 'evidencia')}" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition">
+                            <a href="${item.anexo}" download="${item.anexoNome || 'evidencia'}" class="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition">
                                 <i class="ph-bold ph-download text-emerald-600"></i>
                                 <span>Baixar</span>
                             </a>
@@ -544,8 +527,8 @@
                 card.innerHTML = `
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-2">
-                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">${esc(item.cliente)}</span>
-                            <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-medium">${esc(item.plataforma)} • ${esc(item.modulo)}</span>
+                            <span class="text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">${item.cliente}</span>
+                            <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 font-medium">${item.plataforma} • ${item.modulo}</span>
                         </div>
                         <div class="flex items-center space-x-2">
                             ${badgeAbrirTicket}
@@ -553,23 +536,23 @@
                         </div>
                     </div>
 
-                    <p class="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">${esc(item.descricao)}</p>
+                    <p class="text-sm text-slate-700 dark:text-slate-200 leading-relaxed">${item.descricao}</p>
                     ${ticketRefHtml}
                     ${anexoHtml}
                     ${comentariosHtml}
 
                     <div class="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400">
                         <div class="flex items-center space-x-1.5">
-                            <div class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-[10px]">${esc(item.autor.charAt(0))}</div>
-                            <span class="font-medium text-slate-600 dark:text-slate-300">${esc(item.autor)}</span>
-                            <span>• ${esc(item.data)}</span>
+                            <div class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold flex items-center justify-center text-[10px]">${item.autor.charAt(0)}</div>
+                            <span class="font-medium text-slate-600 dark:text-slate-300">${item.autor}</span>
+                            <span>• ${item.data}</span>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
                             <button onclick="abrirModalReportarProblema('${item.id}')" class="flex items-center space-x-1 px-3 py-1.5 bg-amber-50 dark:bg-amber-950/60 hover:bg-amber-100 text-amber-700 dark:text-amber-300 rounded-xl font-semibold transition border border-amber-200 dark:border-amber-800">
                                 <i class="ph-bold ph-hand-fist text-xs"></i>
                                 <span>Reportar problema</span>
                             </button>
-                            <button onclick="toggleAbrirTicket('${item.id}')" class="flex items-center space-x-1 px-3 py-1.5 ${item.abrirTicket ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300'} rounded-xl font-semibold transition">
+                            <button onclick="toggleAbrirTicket('${item.id}', ${item.abrirTicket})" class="flex items-center space-x-1 px-3 py-1.5 ${item.abrirTicket ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300'} rounded-xl font-semibold transition">
                                 <i class="ph-bold ph-ticket text-xs"></i>
                                 <span>${item.abrirTicket ? 'Ticket Marcado' : 'Abrir ticket'}</span>
                             </button>
@@ -584,7 +567,7 @@
             });
         }
 
-        // Lógica do Checklist
+        // Lógica do Checklist Local
         function renderizarChecklist() {
             const container = document.getElementById('lista-checklist');
             const containerProgresso = document.getElementById('checklist-progresso-container');
@@ -608,7 +591,6 @@
                     });
                 });
 
-                const catAberta = (cat.id in appState.checklistAbertos) ? appState.checklistAbertos[cat.id] : !!cat.aberto;
                 const catDiv = document.createElement('div');
                 catDiv.className = 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm';
 
@@ -617,10 +599,8 @@
                     let tarefasHtml = '';
                     sub.tarefas.forEach(t => {
                         const isChecked = !!appState.checklistChecks[t.id];
-                        const idOcorrencia = appState.checklistProblemas[t.id];
-                        const hasProblem = !!idOcorrencia && appState.feed.some(f => f.id === idOcorrencia);
+                        const hasProblem = !!appState.checklistProblemas[t.id];
 
-                        // Estilização condicional se a tarefa teve problema relatado
                         let boxClass = "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border transition";
                         if (hasProblem) {
                             boxClass += " bg-rose-50/70 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800";
@@ -640,7 +620,7 @@
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-2 self-end sm:self-auto">
-                                    <button onclick="iniciarRelatoOcorrenciaChecklist('${t.id}', '${esc(cat.titulo + ' > ' + sub.titulo)}')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-semibold flex items-center space-x-1 transition border border-rose-200 dark:border-rose-800">
+                                    <button onclick="iniciarRelatoOcorrênciaChecklist('${t.id}', '${cat.titulo} > ${sub.titulo}')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-semibold flex items-center space-x-1 transition border border-rose-200 dark:border-rose-800">
                                         <i class="ph-bold ph-bug text-xs"></i>
                                         <span>Relatar ocorrência</span>
                                     </button>
@@ -671,10 +651,10 @@
                             </div>
                         </div>
                         <div class="flex items-center space-x-2 text-slate-400">
-                            <i class="ph-bold ${catAberta ? 'ph-caret-up' : 'ph-caret-down'} text-lg"></i>
+                            <i class="ph-bold ${cat.aberto ? 'ph-caret-up' : 'ph-caret-down'} text-lg"></i>
                         </div>
                     </div>
-                    <div class="${catAberta ? 'block' : 'hidden'} p-4 pt-0 space-y-4">
+                    <div class="${cat.aberto ? 'block' : 'hidden'} p-4 pt-0 space-y-4">
                         ${subHtml}
                     </div>
                 `;
@@ -695,32 +675,27 @@
         function toggleCategoriaChecklist(catId) {
             const cat = appState.checklistEstrutura.find(c => c.id === catId);
             if (cat) {
-                const atual = (catId in appState.checklistAbertos) ? appState.checklistAbertos[catId] : !!cat.aberto;
-                appState.checklistAbertos[catId] = !atual;
+                cat.aberto = !cat.aberto;
                 salvarChecklistLocal();
                 renderizarChecklist();
             }
         }
 
-        // Marcar/desmarcar: SOMENTE local, não toca no feed
         function toggleCheckTarefa(tarefaId) {
             appState.checklistChecks[tarefaId] = !appState.checklistChecks[tarefaId];
             salvarChecklistLocal();
             renderizarChecklist();
         }
 
-        // "Relatar ocorrência" dentro do checklist: abre o formulário que publica no feed em tempo real
-        function iniciarRelatoOcorrenciaChecklist(tarefaId, moduloSugerido) {
+        function iniciarRelatoOcorrênciaChecklist(tarefaId, moduloSugerido) {
             appState.tarefaSelecionadaParaReport = tarefaId;
             abrirModalReport();
             document.getElementById('report-modulo').value = moduloSugerido;
-            // Preenche o tipo como Bug por padrão quando vem do checklist
             document.getElementById('report-tipo').value = 'Bug';
             verificarStatusCondicional();
         }
 
         function abrirModalReport() {
-            document.getElementById('report-autor').value = localStorage.getItem('tvf_nome') || '';
             document.getElementById('modal-report').classList.remove('hidden');
             document.getElementById('modal-report').classList.add('flex');
         }
@@ -786,7 +761,8 @@
             document.getElementById('conteudo-anexo-modal').innerHTML = '';
         }
 
-        function salvarReport(e) {
+        // Salvar ocorrência enviando para o Firebase Firestore em tempo real
+        async function salvarReport(e) {
             e.preventDefault();
             const autor = document.getElementById('report-autor').value;
             const cliente = document.getElementById('report-cliente').value;
@@ -797,7 +773,6 @@
             const descricao = document.getElementById('report-descricao').value;
 
             const novoItem = {
-                id: 'FEED-' + Date.now(),
                 autor,
                 cliente,
                 plataforma,
@@ -809,30 +784,30 @@
                 anexoNome: appState.anexoAtualNome,
                 data: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                 abrirTicket: false,
-                comentarios: []
+                comentarios: [],
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // Sincroniza com o feed (sempre mais recente) antes de acrescentar
-            appState.feed = lerLocal('tvf_feed_v3', feedInicial);
-            appState.feed.unshift(novoItem);
-            if (!salvarFeed()) { appState.feed.shift(); return; }
+            try {
+                await db.collection('ocorrencias').add(novoItem);
 
-            // Se veio de uma tarefa do checklist, marca (localmente) que ela tem ocorrência relatada
-            if (appState.tarefaSelecionadaParaReport) {
-                appState.checklistProblemas[appState.tarefaSelecionadaParaReport] = novoItem.id;
-                salvarChecklistLocal();
+                // Se veio do checklist, marca a tarefa como vermelha localmente
+                if (appState.tarefaSelecionadaParaReport) {
+                    appState.checklistProblemas[appState.tarefaSelecionadaParaReport] = true;
+                    salvarChecklistLocal();
+                    renderizarChecklist();
+                }
+
+                fecharModalReport();
+                mudarAba('feed');
+            } catch (error) {
+                alert('Erro ao salvar no Firestore.');
+                console.error(error);
             }
-
-            localStorage.setItem('tvf_nome', autor);
-            renderizarFeed();
-            renderizarChecklist();
-            fecharModalReport();
-            mudarAba('feed');
         }
 
         function abrirModalReportarProblema(cardId) {
             document.getElementById('reportar-problema-card-id').value = cardId;
-            document.getElementById('reportar-problema-autor').value = localStorage.getItem('tvf_nome') || '';
             document.getElementById('modal-reportar-problema').classList.remove('hidden');
             document.getElementById('modal-reportar-problema').classList.add('flex');
         }
@@ -843,40 +818,41 @@
             document.getElementById('form-reportar-problema').reset();
         }
 
-        function salvarReportarProblema(e) {
+        async function salvarReportarProblema(e) {
             e.preventDefault();
             const cardId = document.getElementById('reportar-problema-card-id').value;
             const autor = document.getElementById('reportar-problema-autor').value;
             const cliente = document.getElementById('reportar-problema-cliente').value;
             const texto = document.getElementById('reportar-problema-comentario').value;
 
-            appState.feed = lerLocal('tvf_feed_v3', feedInicial);
             const item = appState.feed.find(f => f.id === cardId);
             if (item) {
-                item.comentarios.push({ autor, cliente, texto });
-                salvarFeed();
-                localStorage.setItem('tvf_nome', autor);
-                renderizarFeed();
-            }
-            fecharModalReportarProblema();
-        }
-
-        function toggleAbrirTicket(cardId) {
-            appState.feed = lerLocal('tvf_feed_v3', feedInicial);
-            const item = appState.feed.find(f => f.id === cardId);
-            if (item) {
-                item.abrirTicket = !item.abrirTicket;
-                salvarFeed();
-                renderizarFeed();
+                const novosComentarios = [...item.comentarios, { autor, cliente, texto }];
+                try {
+                    await db.collection('ocorrencias').doc(cardId).update({ comentarios: novosComentarios });
+                    fecharModalReportarProblema();
+                } catch (error) {
+                    alert('Erro ao adicionar comentário.');
+                    console.error(error);
+                }
             }
         }
 
-        function deletarOcorrencia(cardId) {
+        async function toggleAbrirTicket(cardId, statusAtual) {
+            try {
+                await db.collection('ocorrencias').doc(cardId).update({ abrirTicket: !statusAtual });
+            } catch (error) {
+                console.error('Erro ao atualizar ticket:', error);
+            }
+        }
+
+        async function deletarOcorrencia(cardId) {
             if (confirm('Deseja realmente remover esta ocorrência como indevida?')) {
-                appState.feed = lerLocal('tvf_feed_v3', feedInicial).filter(f => f.id !== cardId);
-                salvarFeed();
-                renderizarFeed();
-                renderizarChecklist(); // remove o aviso vermelho da tarefa, se havia
+                try {
+                    await db.collection('ocorrencias').doc(cardId).delete();
+                } catch (error) {
+                    console.error('Erro ao deletar ocorrência:', error);
+                }
             }
         }
 
