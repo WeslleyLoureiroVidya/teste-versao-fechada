@@ -377,22 +377,32 @@
             localStorage.setItem('tvf_checklist_checks_v1', JSON.stringify(appState.checklistChecks));
             localStorage.setItem('tvf_checklist_prob_v1', JSON.stringify(appState.checklistProblemas));
             localStorage.setItem('tvf_checklist_est_v1', JSON.stringify(appState.checklistEstrutura));
+
+            // Dispara evento global para atualizar a própria aba instantaneamente em tempo real
+            window.dispatchEvent(new Event('tvf_atualizar_dados'));
         }
 
+        // Escuta atualizações de outras abas ou da própria aba
         window.addEventListener('storage', (e) => {
-            if (e.key === 'tvf_feed_v3') {
-                appState.feed = JSON.parse(localStorage.getItem('tvf_feed_v3')) || feedInicial;
-                renderizarFeed();
-            }
-            if (e.key === 'tvf_checklist_prob_v1') {
-                appState.checklistProblemas = JSON.parse(localStorage.getItem('tvf_checklist_prob_v1')) || {};
-                renderizarChecklist();
-            }
+            sincronizarDadosLocais();
         });
 
-        document.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('tvf_atualizar_dados', () => {
+            sincronizarDadosLocais();
+        });
+
+        function sincronizarDadosLocais() {
+            appState.feed = JSON.parse(localStorage.getItem('tvf_feed_v3')) || feedInicial;
+            appState.checklistChecks = JSON.parse(localStorage.getItem('tvf_checklist_checks_v1')) || {};
+            appState.checklistProblemas = JSON.parse(localStorage.getItem('tvf_checklist_prob_v1')) || {};
+            appState.checklistEstrutura = JSON.parse(localStorage.getItem('tvf_checklist_est_v1')) || checklistModelo;
+            
             renderizarFeed();
             renderizarChecklist();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            sincronizarDadosLocais();
 
             window.addEventListener('paste', (e) => {
                 const items = e.clipboardData.items;
@@ -673,14 +683,12 @@
             if (cat) {
                 cat.aberto = !cat.aberto;
                 salvarEstado();
-                renderizarChecklist();
             }
         }
 
         function toggleCheckTarefa(tarefaId) {
             appState.checklistChecks[tarefaId] = !appState.checklistChecks[tarefaId];
             salvarEstado();
-            renderizarChecklist();
         }
 
         function iniciarRelatoOcorrênciaChecklist(tarefaId, moduloSugerido) {
@@ -789,8 +797,6 @@
 
             appState.feed.unshift(novoItem);
             salvarEstado();
-            renderizarFeed();
-            renderizarChecklist();
             fecharModalReport();
             mudarAba('feed');
         }
@@ -818,7 +824,6 @@
             if (item) {
                 item.comentarios.push({ autor, cliente, texto });
                 salvarEstado();
-                renderizarFeed();
                 fecharModalReportarProblema();
             }
         }
@@ -828,7 +833,6 @@
             if (item) {
                 item.abrirTicket = !item.abrirTicket;
                 salvarEstado();
-                renderizarFeed();
             }
         }
 
@@ -836,7 +840,6 @@
             if (confirm('Deseja realmente remover esta ocorrência como indevida?')) {
                 appState.feed = appState.feed.filter(f => f.id !== cardId);
                 salvarEstado();
-                renderizarFeed();
             }
         }
 
