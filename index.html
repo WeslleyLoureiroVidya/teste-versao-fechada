@@ -67,12 +67,12 @@
 
     <!-- Navegação de Abas -->
     <div class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
-        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-6">
-            <button onclick="mudarAba('feed')" id="tab-btn-feed" class="py-3 text-sm font-semibold border-b-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 flex items-center space-x-2 transition">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-6 overflow-x-auto">
+            <button onclick="mudarAba('feed')" id="tab-btn-feed" class="py-3 text-sm font-semibold border-b-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 flex items-center space-x-2 transition whitespace-nowrap">
                 <i class="ph-bold ph-broadcast text-base"></i>
                 <span>Feed de Ocorrências</span>
             </button>
-            <button onclick="mudarAba('checklist')" id="tab-btn-checklist" class="py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center space-x-2 transition">
+            <button onclick="mudarAba('checklist')" id="tab-btn-checklist" class="py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center space-x-2 transition whitespace-nowrap">
                 <i class="ph-bold ph-check-square text-base"></i>
                 <span>Checklist de Testes</span>
             </button>
@@ -123,7 +123,7 @@
                         <i class="ph-bold ph-check-square text-emerald-600"></i>
                         <span>Checklist de Validação da Versão</span>
                     </h2>
-                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">O seu progresso de testes é individual e salvo apenas neste dispositivo[cite: 2].</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">O seu progresso de testes é individual e salvo apenas neste dispositivo.</p>
                 </div>
                 <div class="flex items-center space-x-3">
                     <button onclick="limparChecklist()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-semibold flex items-center space-x-1.5 transition">
@@ -304,53 +304,224 @@
         const checklistModelo = [
             {
                 id: 'cat-inicio',
-                titulo: 'Tela de Início / Dashboard',
+                titulo: '1. Tela de Início',
                 aberto: true,
                 subcategorias: [
                     {
-                        id: 'sub-desempenho',
-                        titulo: 'Performance Comercial',
+                        id: 'sub-inicio-perf',
+                        titulo: 'Performance e painel',
                         tarefas: [
-                            { id: 't1', texto: 'Testar a performance do vendedor' },
-                            { id: 't2', texto: 'Visualizar o ranking da performance comercial' }
+                            { id: 't1', texto: 'Carregar a performance do vendedor. Abra a área Performance no usuário de teste correto. Confirme que a tela conclui o carregamento e apresenta os dados disponíveis para aquele perfil. Se vier vazia, registre o perfil, período e filtros antes de classificar como falha; na reunião anterior a ausência para perfil correto não foi comprovada.' },
+                            { id: 't2', texto: 'Alternar período de performance. Selecione Parcial e Mensal (ou os períodos disponíveis). Entre nos cards/objetivos de venda e confira se o conteúdo corresponde à seleção e retorna corretamente ao painel.' },
+                            { id: 't3', texto: 'Navegar pelo gráfico de performance. Arraste o gráfico horizontalmente e confira se os meses/valores adicionais ficam acessíveis sem corte ou salto indevido.' },
+                            { id: 't4', texto: 'Atualizar performance sem travamento. Acione Atualizar. Confirme que há resposta, a tela não fica indefinidamente carregando e o aplicativo não fecha. Se Arandu apresentar inconsistência de faixa/percentuais durante a sincronização, guarde requisição/log e valores observados; o relato de 28/09 não documentou números nem endpoint. ARANDU-28-04 · 25/09 e 28/09' },
+                            { id: 't5', texto: 'Compartilhar relatório, quando disponível. Abra um relatório acessível e use o compartilhamento para um destino de teste. Confirme que o arquivo/conteúdo abre corretamente. Não envie informação de cliente a terceiros.' }
                         ]
                     },
                     {
-                        id: 'sub-mural',
-                        titulo: 'Mural de Comunicações',
+                        id: 'sub-inicio-mural',
+                        titulo: 'Mural de comunicações',
                         tarefas: [
-                            { id: 't3', texto: 'Clicar no mural e validar se a imagem está aparecendo corretamente' },
-                            { id: 't4', texto: 'Curtir o mural e deixar um comentário' }
+                            { id: 't6', texto: 'Abrir mural, publicação e imagem. Abra uma publicação com imagem e confira se a imagem carrega sem distorção. Se não houver publicação/imagem, registre bloqueio por pré-condição.' },
+                            { id: 't7', texto: 'Campo de comentário com teclado aberto. Abra o campo de comentário. Confirme que campo e botão de envio ficam visíveis acima do teclado no Android físico e emulador; repita no iOS para regressão. FORCE-6484 · sintoma Android' },
+                            { id: 't8', texto: 'Digitar continuamente. Digite uma frase caractere a caractere e observe se o teclado recolhe sozinho. Deve permanecer aberto até o usuário enviar ou fechá-lo; confirme que o texto digitado não some. Teste iOS e Android. FORCE-6480' },
+                            { id: 't9', texto: 'Enviar comentário e curtir. Envie comentário de teste, feche/reabra a publicação e confira persistência e ausência de duplicação. Aplique/remova curtida uma vez e confirme o estado exibido. Use conteúdo fictício.' },
+                            { id: 't10', texto: 'Compartilhar publicação/imagem, quando habilitado. Acione compartilhar e confira se a prévia/arquivo corresponde à publicação. Registre falha sem transmitir dados reais.' }
+                        ]
+                    },
+                    {
+                        id: 'sub-inicio-acoes',
+                        titulo: 'Ações rápidas e navegação',
+                        tarefas: [
+                            { id: 't11', texto: 'Abrir ações rápidas do Início. Teste Novo Pedido, Realizar Check-in e Cadastro de Cliente, quando habilitados na base. Confirme que cada atalho abre o fluxo certo e mantém o cliente/base selecionado corretamente.' },
+                            { id: 't12', texto: 'Lista de Atividades no Início (Arandu). Abra a lista e tente retornar a Carteira/Mapa por seus controles, sem sair da sessão nem precisar relogar. Depois repita após entrar numa atividade. Registre se a navegação fica presa. ARANDU-958 · relato 25/09' }
                         ]
                     }
                 ]
             },
             {
                 id: 'cat-clientes',
-                titulo: 'Tela de Clientes',
+                titulo: '2. Tela de Cliente',
                 aberto: false,
                 subcategorias: [
                     {
-                        id: 'sub-filtros-clientes',
-                        titulo: 'Filtros e Listagem',
+                        id: 'sub-cli-pesq',
+                        titulo: 'Pesquisa, filtros, paginação e Mapa',
                         tarefas: [
-                            { id: 't5', texto: 'Testar filtro de comprados no mês junto com cidade' },
-                            { id: 't6', texto: 'Verificar se o cadastro de novo cliente salva com sucesso' }
+                            { id: 't13', texto: 'Pesquisar por nome. Busque um cliente conhecido. Confira correspondência, ausência de duplicatas e atualização da lista.' },
+                            { id: 't14', texto: 'Pesquisar por CPF/CNPJ. Use identificador fictício/autorizado no ambiente de teste. Confira que retorna o cliente esperado; não copie identificadores reais para a ocorrência.' },
+                            { id: 't15', texto: 'Aplicar um filtro isolado. Selecione um filtro disponível na Carteira e confira se a lista contém somente resultados correspondentes.' },
+                            { id: 't16', texto: 'Combinar filtros. Aplique dois ou mais filtros disponíveis; confira que os resultados atendem a todos os critérios, os filtros continuam visíveis e a contagem superior acompanha a lista.' },
+                            { id: 't17', texto: 'Rolar toda a lista após filtrar. Percorra até o fim e observe se resultados continuam carregando, se a contagem muda inesperadamente ou se itens se repetem. A reunião já havia apontado divergência de contagem/carregamento como regressão a observar.' },
+                            { id: 't18', texto: 'Atualizar a listagem de clientes. Use Atualizar (menu de três pontos, se presente) e verifique se os registros esperados são sincronizados e a contagem permanece coerente. Registre rede/conectividade e horário.' },
+                            { id: 't19', texto: 'Carteira e Mapa com pesquisa e filtros. Repita a busca e aplique filtro nas duas visualizações. No Mapa, abra o cartão (“bonequinho”) de um cliente e confirme que identificação e ação correspondem ao ponto selecionado.' },
+                            { id: 't20', texto: 'Contagem e agrupamento do Mapa. Compare contagem da carteira com os marcadores/agrupamentos ao afastar e aproximar o mapa. Considere que clientes sem latitude/longitude podem não aparecer; registre quantos têm localização e não classifique diferença como falha sem conferir esse dado. relato a investigar · Force 25/09' },
+                            { id: 't21', texto: 'Alternar Carteira, Atividades e Mapa repetidamente. Faça a alternância antes e depois de abrir/concluir atividade e após navegar a Início, Vendas e Catálogo. Cada aba deve abrir normalmente e ser possível sair de Atividades sem relogar. ARANDU-958' }
+                        ]
+                    },
+                    {
+                        id: 'sub-cli-cad',
+                        titulo: 'Cadastro de cliente e isolamento por usuário (Arandu)',
+                        tarefas: [
+                            { id: 't22', texto: 'Autocompletar endereço por CNPJ. Cadastre PJ com CNPJ de teste elegível e aguarde consulta. Confira CEP, logradouro, número, complemento e bairro em campos separados; Inscrição Estadual na área correta. Campo ausente na fonte deve ficar vazio/editável. ARANDU-957' },
+                            { id: 't23', texto: 'Salvar cadastro com envio ao ERP. Confirme feedback de sucesso e que o cliente aparece após atualizar Carteira/Clientes.' },
+                            { id: 't24', texto: 'Cadastro pendente não deve vazar entre usuários. Só com dois usuários de teste preparados (A sem vendedor vinculado e B com vínculo): provocar falha controlada de envio em A, sair da conta, entrar em B, cadastrar cliente de teste e revisar Carteira e registros de Manager. Confirme que a tentativa pendente de A não aparece como cliente de B. Se não houver ambiente isolado, bloqueie. ARANDU-959 · regra de descarte ainda precisa confirmação' }
+                        ]
+                    },
+                    {
+                        id: 'sub-cli-ativ',
+                        titulo: 'Atividades dentro do cliente (Arandu)',
+                        tarefas: [
+                            { id: 't25', texto: 'Registrar Atividades pela tela “O que deseja fazer?”. Selecione cliente, toque Registrar Atividades e confirme abertura do fluxo e identificação do mesmo cliente. ARANDU-961' },
+                            { id: 't26', texto: 'Executar atividade pelo cadastro. Em Dados Cadastrais > Atividades, toque Executar atividade. Confirme que lista as atividades disponíveis para aquele cliente e avança ao selecionar.' },
+                            { id: 't27', texto: 'Pré-seleção na conclusão. Comece com três opções, selecione duas e avance a Concluir. Devem aparecer todas as opções, com as duas escolhidas marcadas e a terceira disponível para inclusão/remoção. ARANDU-960 · reabertura discutida em 25/09' },
+                            { id: 't28', texto: 'Lançar venda pelo fluxo do cliente. Em Dados Cadastrais > Atividades > Executar atividade, toque Lançar venda. Confirme que abre o cabeçalho da venda para o cliente correto; compare com o mesmo comando aberto pela aba geral Atividades. ARANDU-962' },
+                            { id: 't29', texto: 'Voltar/cancelar sem perder o contexto. Inicie execução, avance e volte ou saia do lançamento de venda. Observe se o usuário retorna a uma tela coerente, se a atividade em andamento fica visível e se não precisa reiniciar sem explicação. Registre caminho e estado; o fluxo esperado ainda foi debatido em 25/09.' }
                         ]
                     }
                 ]
             },
             {
                 id: 'cat-vendas',
-                titulo: 'Módulo de Vendas / PDV',
+                titulo: '3. Tela de Vendas',
                 aberto: false,
                 subcategorias: [
                     {
-                        id: 'sub-pdv',
-                        titulo: 'Emissão e Pagamento',
+                        id: 'sub-vendas-criar',
+                        titulo: 'Criar venda e concluir a atividade',
                         tarefas: [
-                            { id: 't7', texto: 'Realizar uma venda utilizando forma de pagamento mista (Dinheiro + Cartão)' },
-                            { id: 't8', texto: 'Testar cancelamento de item no carrinho antes de fechar a conta' }
+                            { id: 't30', texto: 'Abrir nova venda para cliente filtrado. A partir de um cliente positivo selecionado na Carteira/Mapa, inicie nova venda e confirme cliente e empresa no cabeçalho antes de adicionar produtos.' },
+                            { id: 't31', texto: 'Tipo de negociação com desconto. Com tipo de negociação e parâmetro corretos, adicione produto e compare preço/total antes e depois da seleção. Confira valor percentual e valor bruto, se ambos forem opções; valide com os valores esperados da tabela de teste.' },
+                            { id: 't32', texto: 'Tipo de negociação com acréscimo. Repita com tipo configurado para acréscimo. Confirme que o valor muda conforme regra da base e que não muda ao alternar para tipo sem acréscimo. Se configuração estiver ausente, bloqueie.' },
+                            { id: 't33', texto: 'Atividade e lançamento de venda. Inicie por Executar atividade na aba geral e depois pelo cadastro do cliente. Em ambos, Lançar venda deve abrir o cabeçalho da venda do cliente da atividade. Registre se voltar ao fluxo errado ou a atividade desaparecer. ARANDU-962 · fluxo debatido 25/09' },
+                            { id: 't34', texto: 'Concluir atividade executada sem planejamento. Para cliente sem planejamento do dia, inicie atividade e tente concluir pelo fluxo disponível, incluindo justificativa de cliente ausente/foto quando o sistema exigir. Confira Atividades do Dia e o estado de realizada. A equipe precisa definir se iniciar já cria estado “em andamento” e o que “concluir direto” deve persistir; até lá registrar como pendente de regra. ARANDU-964 · evidência parcial' },
+                            { id: 't35', texto: 'Vincular venda a atividade. Use uma venda finalizada elegível que não seja rascunho nem esteja vinculada a outra atividade (regra de elegibilidade deve ser confirmada). Confira se aparece na seleção e pode ser vinculada. Registre ID de teste, filtros e resposta; em 28/09 a venda alegadamente elegível não apareceu, mas o estado/endpoint não foi comprovado. ARANDU-28-03 · regra de rascunho indefinida' },
+                            { id: 't36', texto: 'Enviar venda e validar mensagem de sucesso/erro. Envie pedido de teste e confirme estado final na lista/servidor. A mensagem apresentada deve corresponder ao resultado real. Se aparecer “erro 200” ou equivalente, capture texto exato, ID de venda e log/status da requisição; o relato de 28/09 não comprovou se o envio foi concluído nem se “200” era HTTP. ARANDU-28-01' }
+                        ]
+                    },
+                    {
+                        id: 'sub-vendas-rasc',
+                        titulo: 'Vendas não enviadas / rascunhos',
+                        tarefas: [
+                            { id: 't37', texto: 'Salvar pedido como rascunho, inclusive offline. Adicione produto de teste, salve e confirme que aparece em Não enviados/rascunhos com cliente, itens e total corretos. Não trate rascunho como venda finalizada.' },
+                            { id: 't38', texto: 'Abrir detalhes e alterar ordenação. Entre nos detalhes e confira código/descrição e organização dos itens. Compare após trocar opção de ordenação, se houver.' },
+                            { id: 't39', texto: 'Gerar PDF offline. Gere e abra PDF de rascunho. Confira conteúdo, totais e imagens. Se falhar, anote o tamanho do arquivo e quantidade/resolução das imagens; a reunião alertou que PDFs acima de aproximadamente 10 MB podem falhar no Sankhya, hipótese dependente do caso.' },
+                            { id: 't40', texto: 'Duplicar pedido. Teste manter o mesmo cliente e, se permitido, trocar o cliente: uma vez pelo menu de ações e outra pelos detalhes. Confira cliente, produtos e totais antes de salvar.' },
+                            { id: 't41', texto: 'Editar e cancelar edição. Entre em editar e saia sem alterar: confirme que dados não mudaram. Depois faça uma alteração controlada num produto e confira que pedido e total refletem a edição.' },
+                            { id: 't42', texto: 'Retomar rascunho para vínculo. Se o fluxo permitir, procure o rascunho na seleção de venda da atividade e registre se ele aparece. A reunião de 25/09 relatou que rascunho não apareceu; a elegibilidade para vincular rascunho ainda não foi decidida, portanto não aprovar/reprovar sem regra.' }
+                        ]
+                    },
+                    {
+                        id: 'sub-vendas-env',
+                        titulo: 'Vendas enviadas',
+                        tarefas: [
+                            { id: 't43', texto: 'Abrir detalhes e percorrer abas/status. Confira dados do pedido, produtos, cliente e documentos em todas as abas disponíveis.' },
+                            { id: 't44', texto: 'Pedido com nota fiscal/orçamento. Se houver registro de teste, navegue pelos indicadores/etapas do pedido e confirme se cada documento corresponde à venda aberta.' },
+                            { id: 't45', texto: 'Gerar e compartilhar PDF online. Abra PDF online de venda enviada e valide totais e legibilidade. Use compartilhamento apenas para destino de teste, sem dados reais.' },
+                            { id: 't46', texto: 'Editar pedido enviado, quando habilitado. Em base que permite editar confirmado, abra edição e confira se itens carregam. Se carrinho vier vazio, registre se produto pertence à base/empresa e compare com outra venda da mesma base antes de reportar. Relato da reunião foi inconclusivo.' }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'cat-catalogo',
+                titulo: '4. Tela de Catálogo',
+                aberto: false,
+                subcategorias: [
+                    {
+                        id: 'sub-cat-filtros',
+                        titulo: 'Filtros e busca de produtos',
+                        tarefas: [
+                            { id: 't47', texto: 'Filtros A/B/C/D ou equivalentes disponíveis. Se a base apresentar esses filtros, aplique cada opção individualmente e confirme os produtos retornados.' },
+                            { id: 't48', texto: 'Grupo, marca, fornecedor e fabricante. Aplique cada filtro, depois combine pelo menos dois. Confirme que os produtos correspondem à combinação. Verifique rolagem horizontal/vertical para garantir que todos os filtros são alcançáveis.' },
+                            { id: 't49', texto: 'Exibição visual de Marca/Fabricante. Confira se as caixas/bordas dos filtros têm largura coerente e se fabricante não fica cortado no layout. Registre aparelho, orientação e captura; o relato de 25/09 foi observação visual, sem evidência conclusiva.' },
+                            { id: 't50', texto: 'Filtro inteligente e padrão de Catálogo. Registre estado dos filtros (Todos, Destaque, Promoção, Mais vendidos ou opções disponíveis) e tabela padrão. Se não houver resultado, limpe os filtros e compare antes de reportar. A reunião mostrou que parâmetros e tabela padrão afetam a reprodução.' },
+                            { id: 't51', texto: 'Estoque do produto. Abra botão de estoque/vendas. Confirme que a quantidade é exibida para o produto selecionado e não causa travamento.' },
+                            { id: 't52', texto: 'Imagem do produto. Abra imagem e use compartilhar, se habilitado. Confirme que a imagem corresponde ao item; não compartilhe imagens fora do fluxo autorizado.' }
+                        ]
+                    },
+                    {
+                        id: 'sub-cat-preco',
+                        titulo: 'Preço, histórico e conversão',
+                        tarefas: [
+                            { id: 't53', texto: 'Tipo de negociação no Catálogo. Com parâmetro/tipo habilitado, compare preço exibido para sem desconto, desconto e acréscimo. Confirme com regra/valor esperado da base, sem inferir resultado só pela etiqueta do tipo.' },
+                            { id: 't54', texto: 'Unidade de medida FD/UN. Escolha produto de teste com conversão conhecida e alterne unidade repetidamente no modal. Confira quantidade, valor unitário e total de cada linha; voltar à unidade inicial deve restaurar valores originais, sem conversão acumulada. FORCE-6485 · reabertura de FORCE-6442' },
+                            { id: 't55', texto: 'Última compra/histórico de vendas no produto. Abra o produto nos contextos disponíveis (Catálogo e pedido; modal e detalhe, quando existirem). Confira que seção e dados disponíveis correspondem ao cliente/produto. Não assumir que todo painel de histórico deve ser clicável: regra de interação citada na reunião está ambígua.' },
+                            { id: 't56', texto: 'Tocar em data do Histórico de Vendas durante pedido. Em iOS e Android, toque uma data de teste e confirme que o app não fecha. Se ação de selecionar/aplicar histórico não for definida, confirme apenas ausência de crash e registre regra pendente. FORCE-6481 · crash observado na 5.2.388' }
+                        ]
+                    },
+                    {
+                        id: 'sub-cat-mult',
+                        titulo: 'Inclusão múltipla',
+                        tarefas: [
+                            { id: 't57', texto: 'Aplicar filtro e abrir Inclusão múltipla. Confira que lista mostra somente produtos que atendem ao filtro ativo.' },
+                            { id: 't58', texto: 'Produtos promocionais/sem estoque. Confirme a regra citada na reunião: produtos em promoção ou sem estoque não devem aparecer na seleção múltipla (se essa regra se mantiver para a configuração da base). Registre diferenças de configuração.' },
+                            { id: 't59', texto: 'Adicionar vários produtos selecionados. Selecione múltiplos itens e confirme que todos aparecem uma vez no carrinho, com quantidades e totais corretos. Anote contagem escolhida e adicionada para evidenciar inclusão parcial.' }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'cat-perfil',
+                titulo: '5. Tela de Perfil',
+                aberto: false,
+                subcategorias: [
+                    {
+                        id: 'sub-perfil-sessao',
+                        titulo: 'Usuário e sessão',
+                        tarefas: [
+                            { id: 't60', texto: 'Conferir usuário logado. Abra Perfil e confira se a identificação exibida corresponde à conta de teste e à base/organização esperada antes de começar outros cenários.' },
+                            { id: 't61', texto: 'Sair da conta. Use Sair/Logout, confirme retorno à tela de autenticação e que a sessão anterior não continua aberta ao reiniciar o aplicativo.' },
+                            { id: 't62', texto: 'Trocar utilização/organização (Arandu). Se a opção estiver disponível, troque para outra organização de teste autorizada. Confirme organização/usuário ativos e que clientes, atividades e carteira correspondem ao novo contexto. Retorne à organização de origem e confirme também o contexto restaurado. Não misture dados entre contas.' },
+                            { id: 't63', texto: 'Reteste transversal de perfil — foto obrigatória. Além da tela Perfil, ao voltar ao Início a partir de Cliente ou Relatórios, observe se a solicitação de foto aparece repetidamente para usuário sem foto. Compare com retorno do Dashboard. O parâmetro e a regra exata ainda precisam ser confirmados. FORCE-6483 · relato em 25/09' }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'cat-checkin',
+                titulo: 'Categoria adicional em Vendas: Check-in / Checkout',
+                aberto: false,
+                subcategorias: [
+                    {
+                        id: 'sub-chk-loc',
+                        titulo: 'Localização e modo offline',
+                        tarefas: [
+                            { id: 't64', texto: 'Iniciar check-in online. Em cliente de teste com localização válida, inicie e conclua checkout com “Venda realizada: Não” e justificativa, se aplicável. Confirme que status e visita são registrados.' },
+                            { id: 't65', texto: 'Iniciar check-in offline com localização já sincronizada. Use cliente cuja latitude/longitude esteja disponível localmente. Confirme se fluxo offline inicia e conclui. Registre estado de rede e se a lista de clientes foi atualizada.' },
+                            { id: 't66', texto: 'Cliente sem localização no modo offline. Registre a mensagem mostrada e estado do botão de atualização. A reunião explicou que pode ser necessário atualizar lista/localização no modo online e concluir check-in para gravar coordenadas; valide esse fluxo com dados de teste e não aprove o bloqueio como defeito sem confirmar a pré-condição.' }
+                        ]
+                    },
+                    {
+                        id: 'sub-chk-foto',
+                        titulo: 'Foto/anexo e sincronização',
+                        tarefas: [
+                            { id: 't67', texto: 'Anexar foto, finalizar checkout e conferir sincronização. Em ambiente de teste, anexe uma imagem não sensível, envie e confirme no Sankhya que a foto acompanha o registro. Repita online/offline se aplicável; anote base e resultado por tentativa. Na PXT, houve relato de foto não recebida, enquanto outra base teria recebido. FORCE-6482 · dependente da integração Sankhya' },
+                            { id: 't68', texto: 'Sincronizar após reconectar. Após operação offline, reconecte e confirme que a visita e o anexo são enviados uma única vez, sem duplicar registro. Sem acesso ao Sankhya/logs, classifique como bloqueado.' }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'cat-planejamento',
+                titulo: 'Categoria adicional em Cliente: Planejamento e histórico de atividades — Arandu',
+                aberto: false,
+                subcategorias: [
+                    {
+                        id: 'sub-plan-edit',
+                        titulo: 'Planejamento',
+                        tarefas: [
+                            { id: 't69', texto: 'Editar planejamento existente. Em dado de teste, abra planejamento numa data inicial, altere para data vazia e salve. Confirme que a atividade foi movida, não duplicada; na edição, cliente, atividade e datas devem vir preenchidos. ARANDU-963 · evidência citada em 25/09' },
+                            { id: 't70', texto: 'Conferir planejamento nas datas de origem e destino. Atualize a tela e procure em ambas as datas. Registre filtro de data, cliente e atividade; a origem deve ficar vazia após mover.' }
+                        ]
+                    },
+                    {
+                        id: 'sub-plan-ativ',
+                        titulo: 'Atividade realizada e venda vinculada (reunião 28/09)',
+                        tarefas: [
+                            { id: 't71', texto: 'Concluir atividade pelo caminho que apresentou ausência. Reproduza o caminho exato registrado pela equipe, guarde cliente/atividade/filtro selecionado, conclua e procure em Realizadas e Todos após atualizar. Confirme que persistiu uma vez e aparece na lista apropriada. Em 28/09 uma tentativa posterior pareceu salvar, portanto comparar caminhos e não generalizar falha. ARANDU-28-02 · reprodução pendente' },
+                            { id: 't72', texto: 'Confirmar venda elegível disponível para vínculo. Identifique estado finalizado/rascunho e vínculo prévio da venda antes de testar. Consulte lista de vendas vinculáveis e registre ID de atividade/venda e resposta. Critério para rascunhos e elegibilidade precisam ser acordados com produto/backend. ARANDU-28-03' },
+                            { id: 't73', texto: 'Faixa/percentuais na sincronização Arandu. Com a requisição original e valores esperados, compare resposta da integração com faixa/percentual exibido. Sem requisição, número esperado ou reprodução, deixe pendente e anexe dados técnicos quando disponíveis. ARANDU-28-04' }
                         ]
                     }
                 ]
@@ -359,21 +530,20 @@
 
         let appState = {
             feed: [],
-            checklistChecks: JSON.parse(localStorage.getItem('tvf_checklist_checks_v1')) || {},
-            checklistProblemas: JSON.parse(localStorage.getItem('tvf_checklist_prob_v1')) || {},
-            checklistEstrutura: JSON.parse(localStorage.getItem('tvf_checklist_est_v1')) || checklistModelo,
+            checklistChecks: JSON.parse(localStorage.getItem('tvf_checklist_checks_v2')) || {},
+            checklistProblemas: JSON.parse(localStorage.getItem('tvf_checklist_prob_v2')) || {},
+            checklistEstrutura: JSON.parse(localStorage.getItem('tvf_checklist_est_v2')) || checklistModelo,
             anexoAtualBase64: null,
             anexoAtualNome: null,
             tarefaSelecionadaParaReport: null
         };
 
         function salvarChecklistLocal() {
-            localStorage.setItem('tvf_checklist_checks_v1', JSON.stringify(appState.checklistChecks));
-            localStorage.setItem('tvf_checklist_prob_v1', JSON.stringify(appState.checklistProblemas));
-            localStorage.setItem('tvf_checklist_est_v1', JSON.stringify(appState.checklistEstrutura));
+            localStorage.setItem('tvf_checklist_checks_v2', JSON.stringify(appState.checklistChecks));
+            localStorage.setItem('tvf_checklist_prob_v2', JSON.stringify(appState.checklistProblemas));
+            localStorage.setItem('tvf_checklist_est_v2', JSON.stringify(appState.checklistEstrutura));
         }
 
-        // Função para limpar todas as marcações do checklist
         function limparChecklist() {
             if (confirm('Deseja realmente limpar todas as marcações e ocorrências relatadas no seu checklist?')) {
                 appState.checklistChecks = {};
@@ -383,7 +553,6 @@
             }
         }
 
-        // Função para limpar o feed de ocorrências globalmente para todos
         async function limparFeedGeral() {
             if (confirm('Você realmente deseja zerar o feed de ocorrência? Essa ação será aplicada para todos.')) {
                 try {
@@ -433,19 +602,18 @@
             const divChecklist = document.getElementById('aba-checklist');
 
             if (aba === 'feed') {
-                btnFeed.className = "py-3 text-sm font-semibold border-b-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 flex items-center space-x-2 transition";
-                btnChecklist.className = "py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center space-x-2 transition";
+                btnFeed.className = "py-3 text-sm font-semibold border-b-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 flex items-center space-x-2 transition whitespace-nowrap";
+                btnChecklist.className = "py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center space-x-2 transition whitespace-nowrap";
                 divFeed.classList.remove('hidden');
                 divChecklist.classList.add('hidden');
             } else {
-                btnChecklist.className = "py-3 text-sm font-semibold border-b-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 flex items-center space-x-2 transition";
-                btnFeed.className = "py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center space-x-2 transition";
+                btnChecklist.className = "py-3 text-sm font-semibold border-b-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 flex items-center space-x-2 transition whitespace-nowrap";
+                btnFeed.className = "py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center space-x-2 transition whitespace-nowrap";
                 divChecklist.classList.remove('hidden');
                 divFeed.classList.add('hidden');
             }
         }
 
-        // Sincronização em tempo real do Feed via Firestore[cite: 2]
         function ouvirMudancasTempoReal() {
             db.collection('ocorrencias')
                 .orderBy('timestamp', 'desc')
@@ -604,7 +772,6 @@
             });
         }
 
-        // Lógica do Checklist Local
         function renderizarChecklist() {
             const container = document.getElementById('lista-checklist');
             const containerProgresso = document.getElementById('checklist-progresso-container');
@@ -648,7 +815,7 @@
                         tarefasHtml += `
                             <div class="${boxClass}">
                                 <div class="flex items-start space-x-3">
-                                    <button onclick="toggleCheckTarefa('${t.id}')" class="mt-0.5 w-5 h-5 rounded-lg border ${isChecked ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900'} flex items-center justify-center transition">
+                                    <button onclick="toggleCheckTarefa('${t.id}')" class="mt-0.5 w-5 h-5 rounded-lg border ${isChecked ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900'} flex items-center justify-center transition flex-shrink-0">
                                         ${isChecked ? '<i class="ph-bold ph-check text-xs"></i>' : ''}
                                     </button>
                                     <div class="flex flex-col">
@@ -656,8 +823,8 @@
                                         ${hasProblem ? '<span class="text-[11px] font-bold text-rose-600 dark:text-rose-400 mt-0.5 flex items-center space-x-1"><i class="ph-bold ph-warning"></i><span>Ocorrência relatada</span></span>' : ''}
                                     </div>
                                 </div>
-                                <div class="flex items-center space-x-2 self-end sm:self-auto">
-                                    <button onclick="iniciarRelatoOcorrênciaChecklist('${t.id}', '${cat.titulo} > ${sub.titulo}')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-semibold flex items-center space-x-1 transition border border-rose-200 dark:border-rose-800">
+                                <div class="flex items-center space-x-2 self-end sm:self-auto flex-shrink-0">
+                                    <button onclick="iniciarRelatoOcorrênciaChecklist('${t.id}', '${cat.titulo} > ${sub.titulo}')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-semibold flex items-center space-x-1 transition border border-rose-200 dark:border-rose-800 whitespace-nowrap">
                                         <i class="ph-bold ph-bug text-xs"></i>
                                         <span>Relatar ocorrência</span>
                                     </button>
@@ -798,7 +965,6 @@
             document.getElementById('conteudo-anexo-modal').innerHTML = '';
         }
 
-        // Salvar ocorrência enviando para o Firebase Firestore em tempo real
         async function salvarReport(e) {
             e.preventDefault();
             const autor = document.getElementById('report-autor').value;
@@ -828,7 +994,6 @@
             try {
                 await db.collection('ocorrencias').add(novoItem);
 
-                // Se veio do checklist, marca a tarefa como vermelha localmente
                 if (appState.tarefaSelecionadaParaReport) {
                     appState.checklistProblemas[appState.tarefaSelecionadaParaReport] = true;
                     salvarChecklistLocal();
