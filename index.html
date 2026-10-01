@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teste versão fechada</title>
-    <!-- Ícone de celular verde na aba do navegador (Favicon SVG embutido) -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 256 256'><rect width='256' height='256' fill='none'/><rect x='64' y='16' width='128' height='224' rx='24' fill='%2316a34a'/><line x1='104' y1='40' x2='152' y2='40' fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='16'/><circle cx='128' cy='204' r='12' fill='%23ffffff'/></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -28,9 +26,6 @@
     <!-- Font Inter & Phosphor Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <!-- Firebase SDKs (Compat / Modular via CDN) -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -65,36 +60,72 @@
         </div>
     </header>
 
+    <!-- Navegação de Abas -->
+    <div class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-6">
+            <button onclick="mudarAba('feed')" id="tab-btn-feed" class="py-3 text-sm font-semibold border-b-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 flex items-center space-x-2 transition">
+                <i class="ph-bold ph-broadcast text-base"></i>
+                <span>Feed de Ocorrências</span>
+            </button>
+            <button onclick="mudarAba('checklist')" id="tab-btn-checklist" class="py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center space-x-2 transition">
+                <i class="ph-bold ph-check-square text-base"></i>
+                <span>Checklist de Testes</span>
+            </button>
+        </div>
+    </div>
+
     <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col space-y-6">
 
-        <!-- Filtros e Barra de Ações do Feed -->
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-            <div>
-                <h2 class="text-base font-bold flex items-center space-x-2">
-                    <i class="ph-bold ph-broadcast text-emerald-600"></i>
-                    <span>Feed de ocorrências</span>
-                </h2>
+        <!-- ABA 1: FEED DE OCORRÊNCIAS -->
+        <div id="aba-feed" class="flex flex-col space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div>
+                    <h2 class="text-base font-bold flex items-center space-x-2">
+                        <i class="ph-bold ph-broadcast text-emerald-600"></i>
+                        <span>Feed em tempo real</span>
+                    </h2>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <select id="filtro-plataforma" onchange="renderizarFeed()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="todas">Todas Plataformas</option>
+                        <option value="Android">Android</option>
+                        <option value="iOS">iOS</option>
+                    </select>
+                    <select id="filtro-status" onchange="renderizarFeed()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="todos">Todos Status</option>
+                        <option value="Bug">Bug</option>
+                        <option value="Ajuste">Ajuste</option>
+                        <option value="Validado">Validado</option>
+                        <option value="Dúvida">Dúvida</option>
+                    </select>
+                </div>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <select id="filtro-plataforma" onchange="renderizarFeed()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500">
-                    <option value="todas">Todas Plataformas</option>
-                    <option value="Android">Android</option>
-                    <option value="iOS">iOS</option>
-                </select>
-                <select id="filtro-status" onchange="renderizarFeed()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500">
-                    <option value="todos">Todos Status</option>
-                    <option value="Bug">Bug</option>
-                    <option value="Ajuste">Ajuste</option>
-                    <option value="Validado">Validado</option>
-                    <option value="Dúvida">Dúvida</option>
-                </select>
+
+            <div id="lista-feed" class="grid grid-cols-1 gap-5">
+                <!-- Preenchido dinamicamente via JavaScript -->
             </div>
         </div>
 
-        <!-- Mural / Feed de Ocorrências -->
-        <div id="lista-feed" class="grid grid-cols-1 gap-5">
-            <!-- Preenchido dinamicamente via JavaScript -->
+        <!-- ABA 2: CHECKLIST DE TESTES -->
+        <div id="aba-checklist" class="hidden flex flex-col space-y-6">
+            <div class="bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-base font-bold flex items-center space-x-2">
+                        <i class="ph-bold ph-check-square text-emerald-600"></i>
+                        <span>Checklist de Validação da Versão</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Seu progresso é salvo localmente neste dispositivo.</p>
+                </div>
+                <div id="checklist-progresso-container" class="flex items-center space-x-3">
+                    <!-- Barra de progresso dinâmica -->
+                </div>
+            </div>
+
+            <div id="lista-checklist" class="space-y-4">
+                <!-- Preenchido dinamicamente via JavaScript -->
+            </div>
         </div>
+
     </main>
 
     <!-- Modal de Reportar Nova Ocorrência -->
@@ -147,7 +178,6 @@
                     </div>
                 </div>
 
-                <!-- Campo condicional para Ticket de Referência se Validado -->
                 <div id="container-ticket-ref" class="hidden">
                     <label class="block text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-1">Ticket de referência *</label>
                     <input type="text" id="report-ticket-ref" placeholder="Ex: #TICKET-4589" class="w-full bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
@@ -241,29 +271,124 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO DO FIREBASE
-        const firebaseConfig = {
-            apiKey: "AIzaSyB7wj9Sq2LdHLZy7T0tOG-Lt2RVaUuolWQ",
-            authDomain: "teste-versao-fechada.firebaseapp.com",
-            projectId: "teste-versao-fechada",
-            storageBucket: "teste-versao-fechada.firebasestorage.app",
-            messagingSenderId: "10617609545",
-            appId: "1:10617609545:web:0052a9d6159678d4ea4e98",
-            measurementId: "G-FJ2BZVKGNS"
-        };
+        const feedInicial = [
+            {
+                id: 'FEED-1',
+                autor: 'Mariana Costa',
+                cliente: 'Supermercado Central',
+                plataforma: 'Android',
+                modulo: 'Módulo: Vendas',
+                tipo: 'Bug',
+                ticketRef: '',
+                descricao: 'Ao tentar emitir NFC-e com cupom desconto, o aplicativo fecha sozinho na tela de pagamento.',
+                anexo: null,
+                anexoNome: null,
+                data: '11:30',
+                abrirTicket: false,
+                comentarios: [
+                    { autor: 'Carlos Lima', cliente: 'Posto Estrela', texto: 'Aqui também aconteceu a mesma coisa.' }
+                ]
+            },
+            {
+                id: 'FEED-2',
+                autor: 'Lucas Ribeiro',
+                cliente: 'Distribuidora Alfa',
+                plataforma: 'iOS',
+                modulo: 'Módulo: Financeiro',
+                tipo: 'Validado',
+                ticketRef: '#TICKET-9923',
+                descricao: 'Fluxo completo de recebimento via PIX validado sem nenhuma lentidão ou divergência.',
+                anexo: null,
+                anexoNome: null,
+                data: '11:15',
+                abrirTicket: false,
+                comentarios: []
+            }
+        ];
 
-        // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        const checklistModelo = [
+            {
+                id: 'cat-inicio',
+                titulo: 'Tela de Início / Dashboard',
+                aberto: true,
+                subcategorias: [
+                    {
+                        id: 'sub-desempenho',
+                        titulo: 'Performance Comercial',
+                        tarefas: [
+                            { id: 't1', texto: 'Testar a performance do vendedor' },
+                            { id: 't2', texto: 'Visualizar o ranking da performance comercial' }
+                        ]
+                    },
+                    {
+                        id: 'sub-mural',
+                        titulo: 'Mural de Comunicações',
+                        tarefas: [
+                            { id: 't3', texto: 'Clicar no mural e validar se a imagem está aparecendo corretamente' },
+                            { id: 't4', texto: 'Curtir o mural e deixar um comentário' }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'cat-clientes',
+                titulo: 'Tela de Clientes',
+                aberto: false,
+                subcategorias: [
+                    {
+                        id: 'sub-filtros-clientes',
+                        titulo: 'Filtros e Listagem',
+                        tarefas: [
+                            { id: 't5', texto: 'Testar filtro de comprados no mês junto com cidade' },
+                            { id: 't6', texto: 'Verificar se o cadastro de novo cliente salva com sucesso' }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'cat-vendas',
+                titulo: 'Módulo de Vendas / PDV',
+                aberto: false,
+                subcategorias: [
+                    {
+                        id: 'sub-pdv',
+                        titulo: 'Emissão e Pagamento',
+                        tarefas: [
+                            { id: 't7', texto: 'Realizar uma venda utilizando forma de pagamento Mista (Dinheiro + Cartão)' },
+                            { id: 't8', texto: 'Testar cancelamento de item no carrinho antes de fechar a conta' }
+                        ]
+                    }
+                ]
+            }
+        ];
 
         let appState = {
-            feed: [],
+            feed: JSON.parse(localStorage.getItem('tvf_feed_v3')) || feedInicial,
+            checklistChecks: JSON.parse(localStorage.getItem('tvf_checklist_checks_v1')) || {},
+            checklistProblemas: JSON.parse(localStorage.getItem('tvf_checklist_prob_v1')) || {},
+            checklistEstrutura: JSON.parse(localStorage.getItem('tvf_checklist_est_v1')) || checklistModelo,
             anexoAtualBase64: null,
-            anexoAtualNome: null
+            anexoAtualNome: null,
+            tarefaSelecionadaParaReport: null
         };
 
+        function salvarEstado() {
+            localStorage.setItem('tvf_feed_v3', JSON.stringify(appState.feed));
+            localStorage.setItem('tvf_checklist_checks_v1', JSON.stringify(appState.checklistChecks));
+            localStorage.setItem('tvf_checklist_prob_v1', JSON.stringify(appState.checklistProblemas));
+            localStorage.setItem('tvf_checklist_est_v1', JSON.stringify(appState.checklistEstrutura));
+        }
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'tvf_feed_v3') {
+                appState.feed = JSON.parse(localStorage.getItem('tvf_feed_v3')) || feedInicial;
+                renderizarFeed();
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
-            ouvirMudancasTempoReal();
+            renderizarFeed();
+            renderizarChecklist();
 
             window.addEventListener('paste', (e) => {
                 const items = e.clipboardData.items;
@@ -287,34 +412,23 @@
             });
         });
 
-        // Sincronização e escuta em tempo real nativa do Firestore
-        function ouvirMudancasTempoReal() {
-            db.collection('ocorrencias')
-                .orderBy('timestamp', 'desc')
-                .onSnapshot((snapshot) => {
-                    appState.feed = [];
-                    snapshot.forEach((doc) => {
-                        const item = doc.data();
-                        appState.feed.push({
-                            id: doc.id,
-                            autor: item.autor,
-                            cliente: item.cliente,
-                            plataforma: item.plataforma,
-                            modulo: item.modulo,
-                            tipo: item.tipo,
-                            ticketRef: item.ticketRef || '',
-                            descricao: item.descricao,
-                            anexo: item.anexo,
-                            anexoNome: item.anexoNome,
-                            data: item.data,
-                            abrirTicket: item.abrirTicket,
-                            comentarios: item.comentarios || []
-                        });
-                    });
-                    renderizarFeed();
-                }, (error) => {
-                    console.error("Erro ao ouvir dados do Firestore: ", error);
-                });
+        function mudarAba(aba) {
+            const btnFeed = document.getElementById('tab-btn-feed');
+            const btnChecklist = document.getElementById('tab-btn-checklist');
+            const divFeed = document.getElementById('aba-feed');
+            const divChecklist = document.getElementById('aba-checklist');
+
+            if (aba === 'feed') {
+                btnFeed.className = "py-3 text-sm font-semibold border-b-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 flex items-center space-x-2 transition";
+                btnChecklist.className = "py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center space-x-2 transition";
+                divFeed.classList.remove('hidden');
+                divChecklist.classList.add('hidden');
+            } else {
+                btnChecklist.className = "py-3 text-sm font-semibold border-b-2 border-emerald-600 text-emerald-600 dark:text-emerald-400 flex items-center space-x-2 transition";
+                btnFeed.className = "py-3 text-sm font-semibold border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 flex items-center space-x-2 transition";
+                divChecklist.classList.remove('hidden');
+                divFeed.classList.add('hidden');
+            }
         }
 
         function verificarStatusCondicional() {
@@ -431,7 +545,7 @@
                                 <i class="ph-bold ph-hand-fist text-xs"></i>
                                 <span>Reportar problema</span>
                             </button>
-                            <button onclick="toggleAbrirTicket('${item.id}', ${item.abrirTicket})" class="flex items-center space-x-1 px-3 py-1.5 ${item.abrirTicket ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300'} rounded-xl font-semibold transition">
+                            <button onclick="toggleAbrirTicket('${item.id}')" class="flex items-center space-x-1 px-3 py-1.5 ${item.abrirTicket ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300'} rounded-xl font-semibold transition">
                                 <i class="ph-bold ph-ticket text-xs"></i>
                                 <span>${item.abrirTicket ? 'Ticket Marcado' : 'Abrir ticket'}</span>
                             </button>
@@ -446,6 +560,136 @@
             });
         }
 
+        // Lógica do Checklist
+        function renderizarChecklist() {
+            const container = document.getElementById('lista-checklist');
+            const containerProgresso = document.getElementById('checklist-progresso-container');
+            container.innerHTML = '';
+
+            let totalTarefas = 0;
+            let totalConcluidas = 0;
+
+            appState.checklistEstrutura.forEach(cat => {
+                let catConcluidas = 0;
+                let catTotal = 0;
+
+                cat.subcategorias.forEach(sub => {
+                    sub.tarefas.forEach(t => {
+                        catTotal++;
+                        totalTarefas++;
+                        if (appState.checklistChecks[t.id]) {
+                            catConcluidas++;
+                            totalConcluidas++;
+                        }
+                    });
+                });
+
+                const catDiv = document.createElement('div');
+                catDiv.className = 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm';
+
+                let subHtml = '';
+                cat.subcategorias.forEach(sub => {
+                    let tarefasHtml = '';
+                    sub.tarefas.forEach(t => {
+                        const isChecked = !!appState.checklistChecks[t.id];
+                        const hasProblem = !!appState.checklistProblemas[t.id];
+
+                        // Estilização condicional se a tarefa teve problema relatado
+                        let boxClass = "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border transition";
+                        if (hasProblem) {
+                            boxClass += " bg-rose-50/70 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800";
+                        } else {
+                            boxClass += " bg-slate-50/60 dark:bg-slate-800/40 border-slate-100 dark:border-slate-800";
+                        }
+
+                        tarefasHtml += `
+                            <div class="${boxClass}">
+                                <div class="flex items-start space-x-3">
+                                    <button onclick="toggleCheckTarefa('${t.id}')" class="mt-0.5 w-5 h-5 rounded-lg border ${isChecked ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900'} flex items-center justify-center transition">
+                                        ${isChecked ? '<i class="ph-bold ph-check text-xs"></i>' : ''}
+                                    </button>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm ${isChecked ? 'line-through text-slate-400 dark:text-slate-500' : 'text-slate-700 dark:text-slate-200'}">${t.texto}</span>
+                                        ${hasProblem ? '<span class="text-[11px] font-bold text-rose-600 dark:text-rose-400 mt-0.5 flex items-center space-x-1"><i class="ph-bold ph-warning"></i><span>Ocorrência relatada</span></span>' : ''}
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2 self-end sm:self-auto">
+                                    <button onclick="iniciarRelatoOcorrênciaChecklist('${t.id}', '${cat.titulo} > ${sub.titulo}')" class="px-2.5 py-1 bg-rose-50 dark:bg-rose-950/60 hover:bg-rose-100 text-rose-700 dark:text-rose-300 rounded-lg text-xs font-semibold flex items-center space-x-1 transition border border-rose-200 dark:border-rose-800">
+                                        <i class="ph-bold ph-bug text-xs"></i>
+                                        <span>Relatar ocorrência</span>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    subHtml += `
+                        <div class="space-y-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">${sub.titulo}</h4>
+                            <div class="space-y-2">
+                                ${tarefasHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+
+                catDiv.innerHTML = `
+                    <div class="p-4 flex items-center justify-between cursor-pointer select-none bg-slate-50/50 dark:bg-slate-900 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 transition" onclick="toggleCategoriaChecklist('${cat.id}')">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center font-bold">
+                                <i class="ph-bold ph-folder-notch-open"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm sm:text-base text-slate-800 dark:text-slate-100">${cat.titulo}</h3>
+                                <p class="text-xs text-slate-500">${catConcluidas} de ${catTotal} concluídas</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2 text-slate-400">
+                            <i class="ph-bold ${cat.aberto ? 'ph-caret-up' : 'ph-caret-down'} text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="${cat.aberto ? 'block' : 'hidden'} p-4 pt-0 space-y-4">
+                        ${subHtml}
+                    </div>
+                `;
+                container.appendChild(catDiv);
+            });
+
+            const porcentagem = totalTarefas > 0 ? Math.round((totalConcluidas / totalTarefas) * 100) : 0;
+            containerProgresso.innerHTML = `
+                <div class="text-right">
+                    <span class="text-xs font-bold text-slate-600 dark:text-slate-400">${totalConcluidas}/${totalTarefas} (${porcentagem}%)</span>
+                    <div class="w-32 h-2 bg-slate-100 dark:bg-slate-800 rounded-full mt-1 overflow-hidden">
+                        <div class="h-full bg-emerald-600 transition-all duration-300" style="width: ${porcentagem}%"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleCategoriaChecklist(catId) {
+            const cat = appState.checklistEstrutura.find(c => c.id === catId);
+            if (cat) {
+                cat.aberto = !cat.aberto;
+                salvarEstado();
+                renderizarChecklist();
+            }
+        }
+
+        function toggleCheckTarefa(tarefaId) {
+            appState.checklistChecks[tarefaId] = !appState.checklistChecks[tarefaId];
+            salvarEstado();
+            renderizarChecklist();
+        }
+
+        function iniciarRelatoOcorrênciaChecklist(tarefaId, moduloSugerido) {
+            appState.tarefaSelecionadaParaReport = tarefaId;
+            abrirModalReport();
+            document.getElementById('report-modulo').value = moduloSugerido;
+            // Preenche o tipo como Bug por padrão quando vem do checklist
+            document.getElementById('report-tipo').value = 'Bug';
+            verificarStatusCondicional();
+        }
+
         function abrirModalReport() {
             document.getElementById('modal-report').classList.remove('hidden');
             document.getElementById('modal-report').classList.add('flex');
@@ -458,6 +702,7 @@
             document.getElementById('container-ticket-ref').classList.add('hidden');
             appState.anexoAtualBase64 = null;
             appState.anexoAtualNome = null;
+            appState.tarefaSelecionadaParaReport = null;
             document.getElementById('preview-container').classList.add('hidden');
             document.getElementById('drop-zone-content').classList.remove('hidden');
         }
@@ -511,7 +756,7 @@
             document.getElementById('conteudo-anexo-modal').innerHTML = '';
         }
 
-        async function salvarReport(e) {
+        function salvarReport(e) {
             e.preventDefault();
             const autor = document.getElementById('report-autor').value;
             const cliente = document.getElementById('report-cliente').value;
@@ -522,6 +767,7 @@
             const descricao = document.getElementById('report-descricao').value;
 
             const novoItem = {
+                id: 'FEED-' + Date.now(),
                 autor,
                 cliente,
                 plataforma,
@@ -533,17 +779,20 @@
                 anexoNome: appState.anexoAtualNome,
                 data: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                 abrirTicket: false,
-                comentarios: [],
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                comentarios: []
             };
 
-            try {
-                await db.collection('ocorrencias').add(novoItem);
-                fecharModalReport();
-            } catch (error) {
-                alert('Erro ao salvar no Firestore.');
-                console.error(error);
+            // Se veio de uma tarefa do checklist, marca ela como tendo problema relatado (vermelha)
+            if (appState.tarefaSelecionadaParaReport) {
+                appState.checklistProblemas[appState.tarefaSelecionadaParaReport] = true;
             }
+
+            appState.feed.unshift(novoItem);
+            salvarEstado();
+            renderizarFeed();
+            renderizarChecklist();
+            fecharModalReport();
+            mudarAba('feed');
         }
 
         function abrirModalReportarProblema(cardId) {
@@ -558,41 +807,37 @@
             document.getElementById('form-reportar-problema').reset();
         }
 
-        async function salvarReportarProblema(e) {
+        function salvarReportarProblema(e) {
             e.preventDefault();
             const cardId = document.getElementById('reportar-problema-card-id').value;
             const autor = document.getElementById('reportar-problema-autor').value;
-            const cliente = document.getElementById('reportar-problema-cliente').value;
+            const cliente = document.getElementById('report-problema-cliente') ? document.getElementById('report-problema-cliente').value : document.getElementById('reportar-problema-cliente').value;
             const texto = document.getElementById('reportar-problema-comentario').value;
 
             const item = appState.feed.find(f => f.id === cardId);
             if (item) {
-                const novosComentarios = [...item.comentarios, { autor, cliente, texto }];
-                try {
-                    await db.collection('ocorrencias').doc(cardId).update({ comentarios: novosComentarios });
-                    fecharModalReportarProblema();
-                } catch (error) {
-                    alert('Erro ao adicionar comentário.');
-                    console.error(error);
-                }
+                item.comentarios.prompt = true; // Mantém estrutura
+                item.comentarios.push({ autor, cliente, texto });
+                salvarEstado();
+                renderizarFeed();
+                fecharModalReportarProblema();
             }
         }
 
-        async function toggleAbrirTicket(cardId, statusAtual) {
-            try {
-                await db.collection('ocorrencias').doc(cardId).update({ abrirTicket: !statusAtual });
-            } catch (error) {
-                console.error('Erro ao atualizar ticket:', error);
+        function toggleAbrirTicket(cardId) {
+            const item = appState.feed.find(f => f.id === cardId);
+            if (item) {
+                item.abrirTicket = !item.abrirTicket;
+                salvarEstado();
+                renderizarFeed();
             }
         }
 
-        async function deletarOcorrencia(cardId) {
+        function deletarOcorrencia(cardId) {
             if (confirm('Deseja realmente remover esta ocorrência como indevida?')) {
-                try {
-                    await db.collection('ocorrencias').doc(cardId).delete();
-                } catch (error) {
-                    console.error('Erro ao deletar ocorrência:', error);
-                }
+                appState.feed = appState.feed.filter(f => f.id !== cardId);
+                salvarEstado();
+                renderizarFeed();
             }
         }
 
